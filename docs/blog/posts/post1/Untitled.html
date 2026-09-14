@@ -183,8 +183,65 @@ window.Quarto = {
 
 
 <p><img src="figure1.png" class="img-fluid" width="500"></p>
-This is my first blog post. Example <span class="math inline">\(\LaTeX\)</span> equation: <span class="math inline">\(\frac{1}{2}\sum_{i=1}^nx_i\)</span>
-% Required for inserting images
+<p>This is my first blog post.</p>
+<p>Suppose you are standing at the foot of a mountain, planning to climb to the top, and then return to the ground at the foot on the other side. Now imagine that there is a tunnel through the mountain, connecting your starting point and end point. Comparing the relative spatial location of the tunnel and your travel path with respect to the horizon, what do you find?</p>
+<p>Through quick observation, you would discover that the tunnel lies completely beneath your travel route. In fact, you would realize that for any two points on or within the mountain, the straight line connecting them always lies inside the mountain. What does this phenomenon imply? What characteristics does the mountain’s landscape have?</p>
+<p>The mountain, from a mathematical view, is a three-dimensional region. The property of this solid set that yields this phenomenon is <strong>convexity</strong>. A region is convex if the straight line segment connecting any two points within the region always lies inside the region. In two-dimensional space, a function is convex if its graph, within the range of any two points on it, lies below the straight line connecting the two points.</p>
+<p>In mathematics, we define the convexity of a function as</p>
+<p><span class="math display">\[
+f\left(\lambda x_1 + (1-\lambda)x_2\right)
+\leq
+\lambda f(x_1) + (1-\lambda)f(x_2),
+\qquad
+\forall x_1,x_2\in\operatorname{dom}(f),\quad
+\forall \lambda\in[0,1].
+\]</span></p>
+<p>There are several operations that preserve convexity, such as nonnegative weighted sums, composition with affine functions, and pointwise maximum. For example, if <span class="math inline">\(f_1,\ldots,f_n\)</span> are convex functions and <span class="math inline">\(\alpha_i\geq0\)</span>, then the nonnegative weighted sum of the functions</p>
+<p><span class="math display">\[
+f(x)=\sum_{i=1}^{n}\alpha_i f_i(x)
+\]</span></p>
+<p>is also convex.</p>
+<p>To extend the use of convexity in solving mathematical problems, we expand the combination from two points to <span class="math inline">\(n\)</span> points, then we get the definition of <em>convex combination</em> as follows:</p>
+<p><span class="math display">\[
+\sum_{i=1}^{n}\lambda_i x_i,
+\qquad
+\lambda_i\geq0,
+\qquad
+\sum_{i=1}^{n}\lambda_i=1.
+\]</span></p>
+<p>This form of the weighted sum of variables with parameters reminds us of the definition of expectation. If the <span class="math inline">\(\lambda_i\)</span>’s are interpreted as probabilities, then convex combinations could be interpreted by expected values. We therefore come to the following inequality named <em>Jensen’s inequality</em>:</p>
+<p><span class="math display">\[
+f\left(\sum_{i=1}^{n}\lambda_i x_i\right)
+\leq
+\sum_{i=1}^{n}\lambda_i f(x_i),
+\]</span></p>
+<p>or equivalently,</p>
+<p><span class="math display">\[
+f\left(\mathbb{E}[X]\right)
+\leq
+\mathbb{E}[f(X)].
+\]</span></p>
+<p>Following the definition of convex functions, we may also derive the convexity of sets. A set <span class="math inline">\(C\)</span> is convex if, for any two points <span class="math inline">\(x_1\)</span> and <span class="math inline">\(x_2\)</span> in <span class="math inline">\(C\)</span>,</p>
+<p><span class="math display">\[
+\lambda x_1+(1-\lambda)x_2\in C,
+\qquad
+\forall\lambda\in[0,1].
+\]</span></p>
+<p>Moreover, the sublevel set of a convex function is also a convex set. For a convex function <span class="math inline">\(f\)</span>, its sublevel set at level <span class="math inline">\(\alpha\)</span> is defined as</p>
+<p><span class="math display">\[
+C_{\alpha}
+=
+\left\{
+x\in\operatorname{dom}(f)
+\mid
+f(x)\leq\alpha
+\right\}.
+\]</span></p>
+<p>The convexity of feasible sets is particularly useful when we attempt to solve optimization problems (a feasible set for a series of constraints is the set of every point that satisfies all the constraints). When the feasible set is convex, together with appropriate properties with respect to the objective function, optimization problems often allow us to employ simplified calculation approaches and produce interior solutions.</p>
+<p>Why should economists care about convexity and its connection with optimization? Convex preferences, feasible sets, and objective functions are closely related to whether optimization problems have well-behaved solutions and why local information could sometimes imply information on the global problem.</p>
+<p>For instance, suppose a consumer has a budget that affords either 10 apples or 5 oranges. If the consumer has convex preferences over the two goods, any combination of apples and oranges that exhausts the budget can be at least as desirable as the extreme bundles (all in apples or oranges). This idea of ``averages being better than extremes’’ constitutes a typical economic intuition for convex preferences. The employment of convexity would be even more valuable when it comes to intricate conditional optimization problems.</p>
+
+
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
@@ -591,13 +648,11 @@ This is my first blog post. Example <span class="math inline">\(\LaTeX\)</span> 
 <footer class="footer">
   <div class="nav-footer">
     <div class="nav-footer-left">
-      <div class="footer-contents">![](/images/UniversityofPennsylvania_FullLogo_RGB.png){width=100px}
-</div>  
-    </div>   
+<p><img src="../../..\images/UniversityofPennsylvania_FullLogo_RGB.png" class="img-fluid" width="100"></p>
+</div>   
     <div class="nav-footer-center">
-      <div class="footer-contents">© 2026 Student Name
-</div>  
-    </div>
+<p>© 2026 Student Name</p>
+</div>
     <div class="nav-footer-right">
       &nbsp;
     </div>
