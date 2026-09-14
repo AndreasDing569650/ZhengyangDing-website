@@ -53,7 +53,7 @@
     "href": "blog/posts/post1/Untitled.html",
     "title": "My First Blog Post",
     "section": "",
-    "text": "This is my first blog post. Example \\(\\LaTeX\\) equation: \\(\\frac{1}{2}\\sum_{i=1}^nx_i\\)"
+    "text": "This is my first blog post. Example \\(\\LaTeX\\) equation: \\(\\frac{1}{2}\\sum_{i=1}^nx_i\\)\n% Required for inserting images"
   },
   {
     "objectID": "resume.html",

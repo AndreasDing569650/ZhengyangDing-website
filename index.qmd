@@ -6,6 +6,20 @@ title: ""
 ::: {.column width="35%"}
 ![](images/profile.png){width="100%"}
 :::
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
 
 ::: {.column width="65%"}
 ![](images/UniversityofPennsylvania_FullLogo_RGB.png){width="250px"}
