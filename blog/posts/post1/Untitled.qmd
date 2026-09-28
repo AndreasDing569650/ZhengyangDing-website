@@ -1,14 +1,10 @@
 ---
-title: "My First Blog Post"
+title: "Introduction to Convexity"
 date: 2026-09-14
 categories:
-  - personal
-  - data-science
+  - convexity
+  - data science
 ---
-
-![](figure1.png){width="500px"}
-
-This is my first blog post.
 
 Suppose you are standing at the foot of a mountain, planning to climb to the top, and then return to the ground at the foot on the other side. Now imagine that there is a tunnel through the mountain, connecting your starting point and end point. Comparing the relative spatial location of the tunnel and your travel path with respect to the horizon, what do you find?
 
