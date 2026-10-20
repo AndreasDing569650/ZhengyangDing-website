@@ -51,12 +51,12 @@ The post-pandemic decline after 2022 is also clearly illustrated from the graph.
 
 ## Takeaway
 
-Method: I used Census FRED API data to analyze three core components of housing: inflation-adjusted house prices, 30-year mortgage rates, and the price-to-income ratio.
+**Method**: I used Census FRED API data to analyze three core components of housing: inflation-adjusted house prices, 30-year mortgage rates, and the price-to-income ratio. They together offer an overview of the general housing affordability in the U.S. over the past decades.
 
-Wage-Price Disconnect: Real house prices have surged over the long run, significantly outpacing household income growth and pushing the price-to-income ratio to historic highs.
+**Wage-Price Disconnect**: Real house prices have surged over the long run, significantly outpacing household income growth and pushing the price-to-income ratio to historic highs.
 
-The Rate Illusion: Historically low mortgage rates countered the severity of rising house prices in 1980-2020, temporarily keeping monthly payments somewhat affordable.
+**The Rate Illusion**: Historically low mortgage rates countered the severity of rising house prices in 1980-2020, temporarily keeping monthly payments somewhat affordable.
 
-The Double Squeeze: The recent post-pandemic spike in mortgage rates, combined with already high housing prices, has fundamentally worsened the economic burden for potential homebuyers.
+**The Double Squeeze**: The recent post-pandemic (after 2020) spike in mortgage rates, combined with already high housing prices, has fundamentally elevated the economic burden for potential home buyers.
 
-Core Insight: Housing affordability is not just about the price tag; it relies heavily on the interaction between prices, income, and borrowing costs. Looking at any single indicator fails to capture the true financial burden on American households.
+**Core Insight**: Housing affordability is not just about the price tag; it relies heavily on the interaction between prices, income, and borrowing costs. Looking at any single indicator fails to capture the true financial burden on American households.
