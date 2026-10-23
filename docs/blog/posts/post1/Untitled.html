@@ -232,22 +232,17 @@ D(x)=8+44x\leq 30.
 </section>
 <section id="what-does-the-multiplier-tell-us" class="level2">
 <h2 class="anchored" data-anchor-id="what-does-the-multiplier-tell-us">What Does the Multiplier Tell Us?</h2>
-<p>The method is sometimes unintuitive because it introduces extra variables into a problem that already seems complicated. Why should adding variables make optimization easier?</p>
-<p>The answer is that these variables help us understand the trade-offs. In particular, <span class="math inline">\(\mu\)</span> is a <em>shadow price</em>: it measures how much the best achievable objective changes when the corresponding constraint is relaxed slightly.</p>
-<p>In our example, <span class="math inline">\(\mu\approx 0.182\)</span>. Locally, increasing the risk ceiling from 30 to 31 would raise the maximum expected annual return by approximately 0.182 percentage point, assuming the simplified model remains valid. This gives the manager a way to evaluate the cost of a strict risk limit. A constraint with a positive multiplier is valuable to understand because changing it could change the optimal outcome; a constraint that does not bind may have no immediate effect when relaxed.</p>
-<p>Real investment models are more complicated. Maximum drawdown depends on the sequence of returns, and actual portfolio rules may include many individual stock limits. Those inequality constraints require an extension of the basic method, commonly expressed through Karush–Kuhn–Tucker conditions.</p>
+<p>The multiplier <span class="math inline">\(\mu\)</span> is the <em>shadow price</em> of the risk constraint. It measures how much the maximum expected return changes when the risk limit is relaxed by one unit, near the optimum.</p>
+<p>Here, <span class="math inline">\(\mu=8/44\approx 0.182\)</span>. Raising the risk-score ceiling from 30 to 31 allows a larger equity allocation, increasing the model’s maximum expected annual return from 8.00% to about 8.18%. The multiplier therefore puts a number on the trade-off between accepting more risk and earning a higher return. This is a local result from our simplified model, not a guarantee about real investment performance.</p>
+<p>In more complex problems, inequality constraints are handled using the Karush–Kuhn–Tucker (KKT) conditions, which also identify whether a constraint is binding at the optimum.</p>
 </section>
-<section id="the-takeaway" class="level2">
-<h2 class="anchored" data-anchor-id="the-takeaway">The Takeaway</h2>
-<p>Lagrange multipliers do more than provide a mathematical trick for solving constrained optimization problems. They offer a way to balance competing objectives while respecting real limitations. The central lesson is that the best decision is not necessarily the one with the highest possible return in isolation. It is the best decision among those that are feasible—and the multipliers help explain how much the constraints matter.</p>
-</section>
-<section id="references-and-data-note" class="level2">
-<h2 class="anchored" data-anchor-id="references-and-data-note">References and Data Note</h2>
-<p>No empirical dataset is used in this example. All portfolio returns, risk-score coefficients, and investment constraints are illustrative assumptions.</p>
+<section id="takeaways" class="level2">
+<h2 class="anchored" data-anchor-id="takeaways">Takeaways</h2>
 <ul>
-<li><a href="https://www.investor.gov/introduction-investing">Investor.gov: Introduction to Investing</a> — background on asset allocation and diversification.</li>
-<li><a href="https://arxiv.org/abs/1404.7493">Goldberg and Mahmoud (2014), <em>Drawdown: From Practice to Theory and Back Again</em></a> — background on drawdown as a measure of investment risk.</li>
-<li><a href="https://www.khanacademy.org/math/multivariable-calculus/multivariable-derivatives/constrained-optimization/a/interpretation-of-lagrange-multipliers">Khan Academy: Interpretation of Lagrange Multipliers</a> — the shadow-price interpretation.</li>
+<li><strong>Set the objective and constraints.</strong> Define what you want to maximize or minimize, then specify the limits that feasible choices must satisfy.</li>
+<li><strong>Build the Lagrangian.</strong> Combine the objective function and constraints using Lagrange multipliers, then use the first-order conditions and the constraints to find the optimum.</li>
+<li><strong>Interpret the multipliers.</strong> A multiplier on a binding constraint measures the marginal value of relaxing that constraint—the change in the best achievable objective from a small relaxation.</li>
+<li><strong>Use the result to make decisions.</strong> Multipliers show which constraints are costly and help evaluate whether relaxing a limit could improve the outcome.</li>
 </ul>
 
 
