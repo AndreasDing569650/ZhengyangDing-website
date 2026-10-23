@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.25">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="dcterms.date" content="2026-10-22">
+
+<title>Matching Parents and Children with SQL in Python – Student Name</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../../">
+<script src="../../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-7b89279ff1a6dce999919e0e67d4d9ec.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../../site_libs/bootstrap/bootstrap-ffa9a6279353761231ec249df0a7fdd3.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="../../../styles.css">
+</head>
+
+<body class="nav-fixed fullcontent quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="../../../index.html" class="navbar-brand navbar-brand-logo">
+    </a>
+    <a class="navbar-brand" href="../../../index.html">
+    <span class="navbar-title">Student Name</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../../bio.html"> 
+<span class="menu-text">About Me</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../../resume.html"> 
+<span class="menu-text">Resume</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../../blog/index.html"> 
+<span class="menu-text">Blog</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Matching Parents and Children with SQL in Python</h1>
+  <div class="quarto-categories">
+    <div class="quarto-category">SQL Tutorial</div>
+    <div class="quarto-category">Intergenerational income</div>
+  </div>
+  </div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">October 22, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="introduction" class="level1">
+<h1>Introduction</h1>
+<p>Inter-generational mobility research requires us to connect information about parents and children. In longitudinal data, parent-child relationships and income information are often stored separately, making data matching an important part of the empirical workflow.</p>
+<p>This tutorial shows how <strong>SQL within Python</strong> can be used to match parents and children in the Panel Study of Income Dynamics (PSID). The main goal is to demonstrate how four basic SQL operations—<code>SELECT</code>, <code>JOIN</code>, <code>GROUP BY</code>, and aggregation—turn separate longitudinal records into a usable parent-child dataset.</p>
+<p>After constructing the matched sample, I use family total income to estimate inter-generational income elasticity (IGE). I then compare income measured in one year with income averaged over two years to illustrate why a single income observation may be a noisy measure of long-run economic status.</p>
+</section>
+<section id="data-and-the-matching-problem" class="level1">
+<h1>Data and the Matching Problem</h1>
+<p>The data come from the <strong>Panel Study of Income Dynamics (PSID)</strong>. The analysis uses individual identifiers, family identifiers, parent-identification variables, age, and total family income.</p>
+<p>For this tutorial, “income” means <strong>total income of the family unit in which a person is observed</strong>, rather than individual labor earnings. Thus, child income is the income of the child’s family, while parent income is the income of the family in which the matched parent is observed.</p>
+<p>The analysis uses income from <strong>2022</strong> for the single-year comparison and income from <strong>2020 and 2022</strong> for the multi-year comparison. The working-age sample is restricted to individuals aged 25–64 in 2022.</p>
+<p>The matching problem is simple:</p>
+<blockquote class="blockquote">
+<p>Given a child, how can we identify the child’s parent and then retrieve the family income of both the child and the parent?</p>
+</blockquote>
+<p>The PSID parent-identification file provides the relationship between children and their biological parents. We construct a permanent person identifier from the interview number and person number:</p>
+<ul>
+<li>Child ID = PID2 + PID3</li>
+<li>Mother ID = PID4 + PID5</li>
+<li>Father ID = PID23 + PID24</li>
+</ul>
+<p>The same person-ID construction is used in the individual longitudinal data, allowing the parent-identification data to be connected to the income data.</p>
+<p>The distinction between <strong>person identifiers</strong> and <strong>family identifiers</strong> is important. The person identifier tells us <em>who the individual is</em>, while the family identifier tells us <em>which family the individual belongs to in a particular year</em>. We first use the person identifier to establish the parent-child relationship and then use the family identifier to retrieve family income.</p>
+</section>
+<section id="sql-workflow" class="level1">
+<h1>SQL Workflow</h1>
+<p>The matching task is fundamentally a relational-data problem.</p>
+<p>The workflow is:</p>
+<p><strong>Parent Identification File</strong></p>
+<p>↓</p>
+<p><strong>Child ID + Parent ID</strong></p>
+<p>↓ <code>JOIN</code></p>
+<p><strong>Individual Longitudinal Data</strong></p>
+<p>↓</p>
+<p><strong>Family Income by Year</strong></p>
+<p>↓ <code>GROUP BY + aggregation</code></p>
+<p><strong>Matched Parent-Child Dataset</strong></p>
+<p>SQL is useful because one table describes family relationships while another contains person-year observations. SQL allows these tables to be connected through identifiers and summarized systematically.</p>
+<p>I use SQL within Python through SQLite. This keeps the matching process reproducible while making the relational operations explicit. The implementation is divided into three stages when coding, including data process, data match, and data analysis. Check the GitHub repository for the complete code for each part of them. Below introduces the key sections of the workflow with an emphasis on the use of SQLite in Python.</p>
+</section>
+<section id="loading-the-data-into-sqlite" class="level1">
+<h1>Loading the Data into SQLite</h1>
+<p>The cleaned individual data contain the variables needed for the income analysis, including:</p>
+<ul>
+<li><code>person_id</code></li>
+<li><code>family_id</code></li>
+<li><code>family_income</code></li>
+<li><code>year</code></li>
+<li><code>age</code></li>
+</ul>
+<p>The parent-identification data contain the variables needed to construct the child, mother, and father IDs.</p>
+<p>These datasets are loaded into a SQLite database as separate tables. The parent-identification table describes <strong>who is related to whom</strong>, while the individual table describes <strong>where each person is observed and what family income is associated with that observation</strong>.</p>
+<p>The two tables can then be connected using their common person identifiers.</p>
+</section>
+<section id="constructing-the-parent-child-relationship" class="level1">
+<h1>Constructing the Parent-Child Relationship</h1>
+<p>The first step is to construct permanent IDs for the child, mother, and father from the PSID identification variables.</p>
+<p>The resulting relationship information can be represented conceptually as:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>child_id</th>
+<th>parent_id</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>4_3</td>
+<td>4_2</td>
+</tr>
+<tr class="even">
+<td>4_3</td>
+<td>4_1</td>
+</tr>
+<tr class="odd">
+<td>5_3</td>
+<td>5_2</td>
+</tr>
+<tr class="even">
+<td>5_3</td>
+<td>5_1</td>
+</tr>
+</tbody>
+</table>
+<p>Each child can therefore be connected to one or two parents.</p>
+<p>The parent-child relationship table serves as a <strong>bridge table</strong>. It does not contain the income measures yet. Its purpose is to identify which parent records should be connected to each child.</p>
+<p>The next step is to use these IDs to retrieve the corresponding parent and child records from the longitudinal individual data.</p>
+</section>
+<section id="sql-operation-1-select" class="level1">
+<h1>SQL Operation 1: SELECT</h1>
+<p><code>SELECT</code> determines <strong>which variables are returned from the database</strong>.</p>
+<p>For this application, the relevant variables include child ID, parent ID, family income, family ID, age, and year.</p>
+<p>For example, after the parent-child relationship has been established, <code>SELECT</code> tells SQL to return the child ID together with the relevant parent and child income measures.</p>
+<p>The key point is that <code>SELECT</code> determines <strong>what information we want to retrieve</strong>. It does not itself perform the parent-child match.</p>
+</section>
+<section id="sql-operation-2-join" class="level1">
+<h1>SQL Operation 2: JOIN</h1>
+<p><code>JOIN</code> performs the actual matching.</p>
+<p>The parent-child bridge table contains <code>parent_id</code> and <code>child_id</code>, while the individual table contains <code>person_id</code>. The two tables are connected by matching these identifiers.</p>
+<p>Conceptually:</p>
+<p><strong>parent_id → person_id → parent’s family record</strong></p>
+<p>and</p>
+<p><strong>child_id → person_id → child’s family record</strong></p>
+<p>The same individual table is therefore used twice: once to retrieve the parent record and once to retrieve the child record.</p>
+<p>For the single-year analysis, the matching is performed using the <strong>2022 observations</strong>.</p>
+<p>We also exclude cases where the parent and child are observed in the same family. This prevents their family-level income measures from being mechanically identical.</p>
+<p>The key role of <code>JOIN</code> in this project is therefore:</p>
+<blockquote class="blockquote">
+<p><strong>Use individual identifiers to connect the parent-child relationship to the appropriate longitudinal records.</strong></p>
+</blockquote>
+</section>
+<section id="sql-operation-3-group-by" class="level1">
+<h1>SQL Operation 3: GROUP BY</h1>
+<p>After the <code>JOIN</code>, a child with two observed parents can appear in multiple records.</p>
+<p>For example:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>child_id</th>
+<th>parent_id</th>
+<th style="text-align: right;">parent income</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>4_3</td>
+<td>4_2</td>
+<td style="text-align: right;">60,000</td>
+</tr>
+<tr class="even">
+<td>4_3</td>
+<td>4_1</td>
+<td style="text-align: right;">80,000</td>
+</tr>
+</tbody>
+</table>
+<p>The final analysis requires one parental-income measure for each child.</p>
+<p><code>GROUP BY</code> organizes observations belonging to the same child into one group. In this application, the data are grouped at the child level so that information from multiple parents can be combined.</p>
+<p>Thus:</p>
+<blockquote class="blockquote">
+<p><strong><code>GROUP BY</code> changes the matched parent records into child-level groups that can then be summarized.</strong></p>
+</blockquote>
+</section>
+<section id="sql-operation-4-aggregation" class="level1">
+<h1>SQL Operation 4: Aggregation</h1>
+<p>After grouping the parent records, we use aggregation to construct the parental-income measure.</p>
+<p>The main aggregation function is <code>AVG()</code>.</p>
+<p>If both parents are observed, their family incomes are averaged. For example, if the two parents have family incomes of $60,000 and $80,000:</p>
+<p>[ ParentIncome = = 70,000. ]</p>
+<p>If only one parent can be matched, the available parent’s family income is used.</p>
+<p>Aggregation is also used across years when constructing the multi-year income measure.</p>
+<p>The four SQL operations therefore have distinct roles:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>SQL operation</th>
+<th>Role in this application</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>SELECT</code></td>
+<td>Choose the variables returned by the query</td>
+</tr>
+<tr class="even">
+<td><code>JOIN</code></td>
+<td>Match parent/child IDs to individual records</td>
+</tr>
+<tr class="odd">
+<td><code>GROUP BY</code></td>
+<td>Organize records at the child level</td>
+</tr>
+<tr class="even">
+<td><code>AVG()</code></td>
+<td>Aggregate information across parents or years</td>
+</tr>
+</tbody>
+</table>
+<p>This is the core SQL workflow of the project:</p>
+<p><strong>Identifiers establish the relationship → <code>JOIN</code> retrieves the records → <code>GROUP BY</code> organizes multiple parents → aggregation constructs the final income measure.</strong></p>
+</section>
+<section id="constructing-multi-year-income" class="level1">
+<h1>Constructing Multi-Year Income</h1>
+<p>To compare single-year and multi-year measures, the same matching procedure is applied to both <strong>2020 and 2022</strong>.</p>
+<p>For each matched parent and child, we retrieve family income in both years.</p>
+<p>The multi-year measures are then constructed as:</p>
+<p>[ ParentIncome_{avg} = ]</p>
+<p>and</p>
+<p>[ ChildIncome_{avg} = . ]</p>
+<p>This gives us two measures of economic status:</p>
+<ol type="1">
+<li><strong>Single-year income:</strong> 2022 income.</li>
+<li><strong>Multi-year income:</strong> average income over 2020 and 2022.</li>
+</ol>
+<p>The final sample is restricted to individuals aged 25–64 in 2022 and to observations with positive income.</p>
+</section>
+<section id="estimating-the-ige" class="level1">
+<h1>Estimating the IGE</h1>
+<p>The intergenerational income elasticity (IGE) is estimated using:</p>
+<p>[ (ChildIncome_i) = + (ParentIncome_i) + _i. ]</p>
+<p>The coefficient () is the IGE. It measures the persistence of economic status across generations.</p>
+<p>A larger IGE indicates a stronger association between parental and child income.</p>
+<p>Two specifications are estimated:</p>
+<ul>
+<li><strong>Single-year IGE:</strong> using 2022 income.</li>
+<li><strong>Multi-year IGE:</strong> using average income from 2020 and 2022.</li>
+</ul>
+<p>Both specifications use the same final matched sample, allowing the comparison to focus on the way income is measured.</p>
+</section>
+<section id="results" class="level1">
+<h1>Results</h1>
+<p>The final matched sample contains <strong>1,635 observations</strong>.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Income measure</th>
+<th style="text-align: right;">IGE</th>
+<th style="text-align: right;">Standard Error</th>
+<th style="text-align: right;">N</th>
+<th style="text-align: right;">R²</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>2022 income</td>
+<td style="text-align: right;"><strong>0.245</strong>*</td>
+<td style="text-align: right;">0.023</td>
+<td style="text-align: right;">1,635</td>
+<td style="text-align: right;">0.065</td>
+</tr>
+<tr class="even">
+<td>2020–2022 average</td>
+<td style="text-align: right;"><strong>0.280</strong>*</td>
+<td style="text-align: right;">0.022</td>
+<td style="text-align: right;">1,635</td>
+<td style="text-align: right;">0.092</td>
+</tr>
+</tbody>
+</table>
+<p>The IGE increases from <strong>0.245</strong> when income is measured only in 2022 to <strong>0.280</strong> when income is averaged over 2020 and 2022.</p>
+<p>The (R^2) also increases from 0.065 to 0.092. Since both models use the same 1,635 observations, the difference is not driven by a change in sample size.</p>
+</section>
+<section id="life-cycle-bias-and-long-run-economic-status" class="level1">
+<h1>Life-Cycle Bias and Long-Run Economic Status</h1>
+<p>A key problem with single-year income is that income varies over the <strong>life cycle</strong>.</p>
+<p>For example, income may be relatively low early in a career, higher during peak working years, and lower again later in life. Therefore, income observed in one particular year may reflect both long-run economic status and the person’s position in the income life cycle.</p>
+<p>Single-year income can also contain temporary shocks such as unemployment or unusually high earnings.</p>
+<p>Conceptually:</p>
+<p>[ Observed&nbsp;Income = Longrun&nbsp;Status + Lifecycle&nbsp;Component + Temporary&nbsp;Shock. ]</p>
+<p>When one year’s income is used in the IGE regression, these components introduce noise into the measure of economic status.</p>
+<p>Averaging income over several years can reduce the influence of temporary fluctuations. The resulting measure is more likely to capture <strong>persistent economic resources</strong> rather than a temporary income realization.</p>
+<p>This matters because the purpose of IGE estimation is to measure <strong>economic persistence across generations</strong>, not simply the relationship between two particular income observations.</p>
+<p>In this application, the IGE increases from <strong>0.245</strong> to <strong>0.280</strong> when income is averaged over 2020 and 2022. This pattern is consistent with the idea that multi-year income provides a more stable measure of long-run economic status.</p>
+<p>This comparison does not prove that the two-year estimate is unbiased. Rather, it demonstrates why researchers often use multi-year income measures when studying long-run intergenerational mobility.</p>
+</section>
+<section id="key-takeaways" class="level1">
+<h1>Key Takeaways</h1>
+<p>This tutorial demonstrates how <strong>SQL within Python</strong> can be used to construct a parent-child match from longitudinal PSID data.</p>
+<p>The demo uses <strong>PSID longitudinal data</strong> to study <strong>intergenerational economic mobility</strong> by matching parents and children and comparing their family-level income.</p>
+<ul>
+<li><p><strong>SQL simplifies parent-child matching</strong> by using <code>SELECT</code>, <code>JOIN</code>, <code>GROUP BY</code>, and aggregation to connect individuals across longitudinal records.</p></li>
+<li><p><strong>Individual and family identifiers serve different purposes:</strong> individual IDs identify parents and children, while family IDs allow us to retrieve their family-level income.</p></li>
+<li><p><strong><code>JOIN</code> connects records across people and years</strong>, while <strong><code>GROUP BY</code> and aggregation</strong> summarize parent information at the child level.</p></li>
+<li><p><strong>SQL makes the matching process transparent and reproducible</strong>, providing a structured alternative to manual data manipulation.</p></li>
+<li><p><strong>The demo also shows why income measurement matters for IGE estimation.</strong> Using 2022 income gives an IGE of <strong>0.245</strong>, compared with <strong>0.280</strong> when income is averaged over 2020–2022.</p></li>
+</ul>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p><img src="../../..\images/UniversityofPennsylvania_FullLogo_RGB.png" class="img-fluid" width="100"></p>
+</div>   
+    <div class="nav-footer-center">
+<p>© 2026 Student Name</p>
+</div>
+    <div class="nav-footer-right">
+      &nbsp;
+    </div>
+  </div>
+</footer>
+
+
+
+
+</body></html>
