@@ -48,8 +48,8 @@ Another attempt we made is to group years of production and see if there are any
 
 ## Takeaways
 
-Visible ratings add limited information within the Top 250. Average ratings show little relationship with ranking, so small rating differences should not be over-interpreted.
+**Visible ratings add limited information within the Top 250.** Average ratings show little relationship with ranking, so small rating differences should not be over-interpreted.
 
-Ratings differ across genres and countries. Fantasy, mystery, and Japanese films receive relatively lower ratings, while documentaries and South Korean films receive higher ratings, suggesting differences in audience preferences.
+**Ratings differ across genres and countries.** Fantasy, mystery, and Japanese films receive relatively lower ratings, while documentaries and South Korean films receive higher ratings, suggesting differences in audience preferences.
 
-Use ratings as a reference, not a final decision rule. When choosing a film, viewers should consider ranking, genre, country, and personal preferences together rather than relying only on the visible rating.
+**Use ratings as a reference, not a final decision rule.** When choosing a film, viewers should consider ranking, genre, country, and personal preferences together rather than relying only on the visible rating.
