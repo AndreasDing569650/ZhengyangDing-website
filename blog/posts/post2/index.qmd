@@ -8,13 +8,21 @@ categories:
 
 ## Introduction
 
-Douban, a popular film and book review website from China, has a good reputation and a huge amount of audience who carefully rate and comment on films and books from different countries and times. It is particularly known for its top 250 film list, which is ranked among all the films in the world. The list is considered a useful tool for those who want to watch a film with good reputations. As a film fan, I have frequently referred to this list, along with specific comments and ratings, when selecting classic films to watch.
+Douban, a popular film and book review website from China, has a good reputation and a large audience who rate and comment on films and books from different countries and time periods. It is particularly known for its Top 250 film list, which ranks highly regarded films from around the world. The list is widely used by viewers looking for well-reviewed films. As a film fan, I have frequently referred to this list, along with individual ratings and reviews, when selecting films to watch.
 
 ![The Webpage of Douban's Top 250 Film List](images/demo.png)
 
-The ranking of the list is carefully calculated through algorithms, according to the weighted sum of effective ratings from reliable reviewers. This is realized through the analysis of the overall behavior of each reviewer, which the platform could monitor. This brings a high reliability for the list, while the specific calculation remain different. Plus, the audience would not blindly follow the list when selecting films, as they have specific tastes for different types of films. Thus, they would still check the basic info of a film like I do, while the list offers a general spectrum.
+The ranking of the list is calculated using an algorithm based on weighted ratings from different reviewers. The weighting system takes reviewers' overall rating behavior into account, making the ranking different from the simple average rating that is directly displayed to users. This distinction raises an important question: once a film has entered the Top 250, does its visible average rating still provide useful information about its position within the list?
 
-The most direct way to refer to a film’s quality is the average rating for each film, which is visible to the audience. However, as this is already a list of top films, the ratings as references could imposes questions: are they still valuable when the fluctuation is highly restricted for the top list? Particularly, as commenters may be more careful and picky when giving high rates, could there be any bias for the Chinese view films of different types?
+The question is especially relevant because the Top 250 already consists of highly rated films, so the range of visible ratings is relatively narrow. If average ratings are similar across different parts of the ranking, then a film's visible rating may provide little additional information about how highly it is ranked. At the same time, ratings may differ systematically across genres and countries because audiences can have different preferences for different types of films.
+
+Therefore, this blog answers two specific questions: 
+
+**(1) Do visible average ratings vary systematically with a film's position in the Top 250?**
+
+**(2) Do average ratings differ systematically across film genres and countries?**
+
+Answering these questions can help us determine whether visible ratings are a useful tool for comparing films within the Top 250, or whether they should be interpreted in the context of a film's characteristics.
 
 ## Data Analysis
 
@@ -38,8 +46,10 @@ Another attempt we made is to group years of production and see if there are any
 
 ![Average Rating by year](images/year.png)
 
-## Conclusion
+## Takeaways
 
-In general, through the data we scraped from Douban’s top film list, we managed to conduct a series of statistical analysis. We find that the visible ratings among the top-listed films are of insignificant reference value, as they remain stable across rankings of the list. We also find that the Chinese audience might has preferences over documentaries and South Korean films, while domestic films, Japanese films, and films under the genre of mystery or fantasy receive generally less preferences.
+Visible ratings add limited information within the Top 250. Average ratings show little relationship with ranking, so small rating differences should not be over-interpreted.
 
-The findings help us rationally and carefully treat the ratings on major review platforms. Our findings imply that visible ratings from the well-known Douban platform might lose effectiveness within the top 250 list, and ratings on films of certain types (Fantasy, Japanese, domestic, etc.) could be biased when cross-compared with other categories. It is possible that similar patterns exist among other similar rating platforms, which might be a path for future investigations.
+Ratings differ across genres and countries. Fantasy, mystery, and Japanese films receive relatively lower ratings, while documentaries and South Korean films receive higher ratings, suggesting differences in audience preferences.
+
+Use ratings as a reference, not a final decision rule. When choosing a film, viewers should consider ranking, genre, country, and personal preferences together rather than relying only on the visible rating.
