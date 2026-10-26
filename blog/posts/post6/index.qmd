@@ -99,7 +99,8 @@ conn.commit()
 
 The parent-identification file contains separate identifiers for the biological mother and father. To make the subsequent SQL operations more straightforward, these two relationships are converted into a single parent-child bridge table.
 
-```sql
+```python
+cursor.execute("""
 CREATE TABLE parent_child AS
 
 SELECT
@@ -116,7 +117,10 @@ SELECT
     father_id AS parent_id,
     'father' AS parent_type
 FROM parent_identification
-WHERE father_id IS NOT NULL;
+WHERE father_id IS NOT NULL
+""")
+
+conn.commit()
 ```
 
 The resulting table contains one row for each child-parent relationship. A child with both a biological mother and father can therefore appear twice, once for each parent.
@@ -129,7 +133,8 @@ We first construct the single-year income measure using observations from 2022.
 
 The SQL query joins the parent-child bridge table to the individual data twice: once to obtain the parent's 2022 observation and once to obtain the child's 2022 observation.
 
-```sql
+```python
+single_year_query = """
 SELECT
     pc.child_id,
 
@@ -160,13 +165,19 @@ WHERE parent.family_id != child.family_id
 GROUP BY
     pc.child_id,
     child.family_income,
-    child.age;
+    child.age
+"""
+
+single_year = pd.read_sql_query(
+    single_year_query,
+    conn
+)
 ```
 
 The first `JOIN` retrieves the parent's 2022 observation, while the second retrieves the child's observation from the same longitudinal table. The condition
 
-```sql
-parent.family_id != child.family_id
+```python
+WHERE parent.family_id != child.family_id
 ```
 
 requires the parent and child to belong to different families in 2022.
@@ -181,7 +192,8 @@ The second income measure uses information from both 2020 and 2022. Instead of r
 
 The SQL query retrieves observations for both generations in both years:
 
-```sql
+```python
+multi_year_query = """
 SELECT
     pc.child_id,
 
@@ -229,7 +241,13 @@ GROUP BY
     pc.child_id,
     child_2020.family_income,
     child_2022.family_income,
-    child_2022.age;
+    child_2022.age
+"""
+
+multi_year = pd.read_sql_query(
+    multi_year_query,
+    conn
+)
 ```
 
 Here, the parent and child observations are matched across both years. The family-separation condition is also imposed separately in 2020 and 2022, so the parent and child must belong to different families in both years.
@@ -237,12 +255,14 @@ Here, the parent and child observations are matched across both years. The famil
 After the SQL query returns the four income variables, Python constructs the two-year averages:
 
 ```python
-parent_income_avg = (
-    parent_income_2020 + parent_income_2022
+multi_year["parent_income_avg"] = (
+    multi_year["parent_income_2020"]
+    + multi_year["parent_income_2022"]
 ) / 2
 
-child_income_avg = (
-    child_income_2020 + child_income_2022
+multi_year["child_income_avg"] = (
+    multi_year["child_income_2020"]
+    + multi_year["child_income_2022"]
 ) / 2
 ```
 
@@ -288,7 +308,7 @@ The final step is to estimate the relationship between parent and child family i
 
 The analysis uses a log-log specification:
 
-\[
+$$
 \log(Y_i^{child})
 =
 \alpha
@@ -296,9 +316,9 @@ The analysis uses a log-log specification:
 \beta\log(Y_i^{parent})
 +
 \varepsilon_i.
-\]
+$$
 
-The coefficient \(\beta\) is the intergenerational income elasticity (IGE). It measures how strongly differences in parent income are associated with differences in child income.
+The coefficient $$\beta$$ is the intergenerational income elasticity (IGE). It measures how strongly differences in parent income are associated with differences in child income.
 
 For the 2022 single-year measure, the analysis takes the natural logarithm of parent and child income and estimates the relationship using OLS:
 
@@ -342,13 +362,13 @@ model_multi = sm.OLS(
 ).fit()
 ```
 
-The analysis extracts the estimated IGE coefficient, standard error, p-value, sample size, and \(R^2\) from each model and saves them to the regression results file.
+The analysis extracts the estimated IGE coefficient, standard error, p-value, sample size, and R-squared from each model and saves them to the regression results file.
 
 ## Results
 
 The two specifications produce the following results:
 
-| Income measure | Observations | IGE | Standard Error | \(R^2\) |
+| Income measure | Observations | IGE | Standard Error | R-squared |
 |---|---:|---:|---:|---:|
 | 2022 single-year income | 1,635 | 0.245 | 0.023 | 0.065 |
 | 2020–2022 average income | 1,635 | 0.280 | 0.022 | 0.092 |
@@ -392,7 +412,7 @@ $$
 
 Averaging income across multiple years can reduce the influence of temporary income fluctuations and provide a measure that is closer to an individual’s longer-run economic position.
 
-In our results, the estimated IGE increases from **0.245** using 2022 income to **0.280** using the 2020–2022 average. The \(R^2\) also increases from **0.065** to **0.092**. This comparison illustrates how the estimated degree of intergenerational persistence can change when income is measured over a longer period.
+In our results, the estimated IGE increases from **0.245** using 2022 income to **0.280** using the 2020–2022 average. The R-squared also increases from **0.065** to **0.092**. This comparison illustrates how the estimated degree of intergenerational persistence can change when income is measured over a longer period.
 
 ## The Takeaway
 

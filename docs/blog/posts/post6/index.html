@@ -105,6 +105,35 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   }
 }</script>
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 <link rel="stylesheet" href="../../../styles.css">
 </head>
@@ -492,9 +521,30 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="life-cycle-bias">Life-Cycle Bias</h2>
 <p>Income is not necessarily a stable measure of an individual’s long-run economic position. A person’s income in any particular year can contain temporary fluctuations. Using only one year’s income may therefore introduce measurement noise into the intergenerational income relationship.</p>
 <p>The single-year specification uses family income observed in 2022:</p>
-<p>[ (Y_i^{child,2022}) = + (Y_i^{parent,2022}) + _i. ]</p>
+<p><span class="math display">\[
+\log(Y_i^{child,2022})
+=
+\alpha
++
+\beta\log(Y_i^{parent,2022})
++
+\varepsilon_i.
+\]</span></p>
 <p>The alternative specification uses average family income over 2020 and 2022:</p>
-<p>[ ( ) = + ( ) + _i. ]</p>
+<p><span class="math display">\[
+\log\left(
+\frac{Y_i^{child,2020}+Y_i^{child,2022}}{2}
+\right)
+=
+\alpha
++
+\beta
+\log\left(
+\frac{Y_i^{parent,2020}+Y_i^{parent,2022}}{2}
+\right)
++
+\varepsilon_i.
+\]</span></p>
 <p>Averaging income across multiple years can reduce the influence of temporary income fluctuations and provide a measure that is closer to an individual’s longer-run economic position.</p>
 <p>In our results, the estimated IGE increases from <strong>0.245</strong> using 2022 income to <strong>0.280</strong> using the 2020–2022 average. The (R^2) also increases from <strong>0.065</strong> to <strong>0.092</strong>. This comparison illustrates how the estimated degree of intergenerational persistence can change when income is measured over a longer period.</p>
 </section>
