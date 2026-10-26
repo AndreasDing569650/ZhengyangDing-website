@@ -155,20 +155,15 @@ ul.task-list li input[type="checkbox"] {
 
 <section id="research-question" class="level2">
 <h2 class="anchored" data-anchor-id="research-question">Research Question</h2>
-<p>Educational background of labor is an important determinant of labor market outcomes. People with higher levels of education could enjoy better employment opportunities and higher salaries, while they may also experience less unemployment. Meanwhile, the relationship between education and the labor market varies across time, as different macroeconomic backgrounds, market structure, and other external factors could all help shape this relationship.</p>
-<p>This blog post explores the following question: how are education attainment and labor market outcomes related in the United States, and how does this relationship change over time?</p>
-<p>This analysis targets adults in the U.S., aged 25-64, and the observation covers the period of 2000-2024. Individuals are divided into five groups according to educational attainment: less than high school, high school diploma, some college or an associate degree, four years of college or a bachelor’s degree, and five or more years of college or a graduate degree.</p>
+<p>Educational attainment is closely associated with labor market outcomes. People with higher levels of education may have better employment opportunities, higher earnings, and more stable labor market experiences. At the same time, these relationships may change over time as the broader economic environment changes.</p>
+<p>This blog post explores the following question:</p>
+<p><strong>how are educational attainment and labor market outcomes related in the United States, and how does this relationship change over time?</strong></p>
+<p>The analysis focuses on U.S. adults aged 25-64 from 2000 to 2024. Individuals are divided into five groups according to educational attainment: less than high school, high school diploma, some college or an associate degree, four years of college or a bachelor’s degree, and five or more years of college or a graduate degree.</p>
 </section>
 <section id="data-and-mechanism" class="level2">
 <h2 class="anchored" data-anchor-id="data-and-mechanism">Data and Mechanism</h2>
-<p>I employ the following three dimensions to evaluate labor market outcomes: whether individuals worked during the year, how much their income was (if they worked), and whether they experienced unemployment during the year. These dimensions respectively evaluate access, return, and risk regarding employment.</p>
-<p>The data source is the Annual Social and Economic Supplement (ASEC) of the Current Population Survey (CPS). The CPS is a nationally representative survey conducted by the U.S. Census Bureau and the Bureau of Labor Statistics, and the ASEC covers information on work, income, and other socioeconomic elements.</p>
-<p>I use individual samples during the period 2001-2025 because surveys collected information from the previous year instead of the current year. Therefore, the observation window corresponds to 2000-2024 as expected.</p>
-<p>The main explanatory variable, educational attainment, is measured using the EDUC variable. EDUC records the highest level of schooling or degree completed, therefore covering many grades and degrees. They are categorized into five groups: less than high school, high school diploma, some college or associate degree, four years of college or bachelor’s degree, and five or more years of college or a graduate degree. This is the reference group for surveyed individuals in the analysis.</p>
-<p>For the first dimension, we calculate the share of people who worked during the year among the sum for each group. This comes from the variable WORKLY from the CPS dataset. The same is conducted for the third dimension, where we calculate the share of individuals who experienced unemployment during the year. This comes from the variable WKSUNEM1. For convenience, we will refer to these two dimensions as employment rate and unemployment in the analysis of the results, while one should not that our calculation may differ from the usual approaches in defining employment and unemployment rates.</p>
-<p>For the second dimension, we use the variable INCWAGE as the original data source, which reports income in nominal U.S. dollars. We first transfer the income to real terms using the 2024 CPI as the basis (The CPI data comes from the Federal Reserve Bank of St.&nbsp;Louis FRED), then calculate the median for each group. We select the median instead of the mean value due to the highly skewed distribution of data.</p>
-<p>All the shares and descriptive values above are calculated in the weighted form according to the person-level sampling weight from the dataset. This enables our findings to depict the whole U.S. labor market.</p>
-<p>This produces three consistent time-series visualizations that can be compared directly across education groups.</p>
+<p>The data come from the Annual Social and Economic Supplement (ASEC) of the Current Population Survey (CPS). The analysis uses <code>EDUC</code> to measure educational attainment and <code>WORKLY</code>, <code>INCWAGE</code>, and <code>WKSUNEM1</code> to measure different aspects of labor market outcomes. Individual-level ASEC sampling weights are used throughout the analysis.</p>
+<p>Educational attainment is the main grouping variable. For each education group and year, we compare three outcomes: the share of individuals who worked during the year, median annual wage income, and the average number of weeks spent looking for work or on layoff. This descriptive approach allows us to examine how labor market outcomes differ across education groups and how these differences evolve over time.</p>
 </section>
 <section id="findings" class="level2">
 <h2 class="anchored" data-anchor-id="findings">Findings</h2>
@@ -178,25 +173,35 @@ ul.task-list li input[type="checkbox"] {
 <figcaption>Employment Experience Share by Educational Attainment</figcaption>
 </figure>
 </div>
-<p>For the first dimension on the relation between education attainment and employment rate, we can tell from the figure that the higher the education level is, the higher the employment rate will be. This pattern is consistent over time, with individuals with 5+ years of college having an employment rate of around 90%, and individuals with less-than-high-school education having an employment rate fluctuating between 60% and 65%. From the time series visualization, we can also observe that the magnitude of fluctuation is negatively correlated with education level. Groups with higher education levels experience slight fluctuations in the employment rate over time. For instance, the downward slope of the employment rate is the steepest for the group with less-than-high-school education during the 2008 financial crisis.</p>
+<p>The first figure shows a clear and persistent positive relationship between educational attainment and employment. Individuals with higher levels of education are consistently more likely to have worked during the year. The gap between education groups remains substantial throughout the period: the employment rate is around 90% for individuals with five or more years of college, compared with roughly 60%-65% for those with less than a high school education.</p>
+<p>The figure also suggests that employment outcomes are more volatile among less-educated groups. The decline around the 2008 financial crisis is particularly pronounced for individuals with less than a high school education, while the highest-education groups show relatively smaller changes over time.</p>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
 <p><img src="images/median_wage_by_education.png" class="img-fluid figure-img"></p>
 <figcaption>Median Annual Wage by Educational Attainment</figcaption>
 </figure>
 </div>
-<p>For the dimension of income level, we also observe a consistent pattern that individuals with higher education levels would receive higher income. The group with the highest education level has a median income that is around 300% of the income level of the group with the lowest education level.</p>
+<p>The second figure shows an even larger and persistent gap in earnings. Individuals with higher educational attainment consistently have higher median annual wage income. Throughout the period, the highest-education group has a median wage roughly three times that of the lowest-education group.</p>
+<p>Although all education groups experience some fluctuations over time, the ranking across education groups remains remarkably stable. The gap in earnings therefore appears to be a persistent feature of the labor market rather than a pattern specific to a particular period.</p>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="images/unemployment_by_education.png" class="img-fluid figure-img"></p>
-<figcaption>Unemployment Experience Share by Educational Attainment</figcaption>
+<p><img src="images/average_weeks_unem_by_education.png" class="img-fluid figure-img"></p>
+<figcaption>Average Weeks Unemployed by Educational Attainment</figcaption>
 </figure>
 </div>
-<p>For the dimension of unemployment existence, we also observe that individuals with better education are less likely to become unemployed. This time-consistent regularity complements the first dimension of our evaluation, implying lower risks of unemployment. The difference in fluctuation magnitude is not observed across different groups of individuals.</p>
+<p>The third figure measures the average number of weeks that individuals spent looking for work or on layoff during the year. The pattern is again strongly associated with educational attainment. Individuals with less education generally spend more weeks in this status, while those with higher education spend fewer weeks.</p>
+<p>The differences become particularly pronounced during periods of labor market disruption. Around the 2008 financial crisis, average weeks looking for work or on layoff increased substantially across all education groups, with the largest increases among the less-educated groups. A similar spike appears around 2020. Despite these common fluctuations, the education ranking remains broadly consistent over time, with less-educated groups generally experiencing longer periods of looking for work or being on layoff.</p>
+<p>This measure should be interpreted as the average number of weeks looking for work or on layoff among individuals for whom <code>WKSUNEM1</code> is applicable. It does not measure the time required to find a job.</p>
 </section>
-<section id="conclusion" class="level2">
-<h2 class="anchored" data-anchor-id="conclusion">Conclusion</h2>
-<p>In general, our three sets of visual analyses reveal a consistent relationship between educational attainment and labor market outcomes in the United States from 2000 to 2024. Individuals with higher levels of education have a higher chance of working during the year, receive higher median wages, and are less likely to experience unemployment. These general trends persist over the observation window, and less-educated groups tend to experience larger fluctuations in employment. One should note that these findings are descriptive rather than causal, as other elements, such as work experience, occupation, and industry, may also contribute to the observed differences.</p>
+<section id="takeaways" class="level2">
+<h2 class="anchored" data-anchor-id="takeaways">Takeaways</h2>
+<ul>
+<li><p><strong>Higher education is consistently associated with better labor market outcomes.</strong> More-educated individuals are more likely to have worked during the year and have substantially higher median wages.</p></li>
+<li><p><strong>The education gap extends beyond employment and earnings.</strong> Less-educated individuals generally spend more weeks looking for work or on layoff, suggesting less favorable labor market experiences.</p></li>
+<li><p><strong>Economic downturns affect all education groups, but not equally.</strong> The 2008 financial crisis and the 2020 shock are visible across the figures, with larger fluctuations generally appearing among less-educated groups.</p></li>
+<li><p><strong>The overall education ranking is remarkably stable over time.</strong> Despite changes in the broader economic environment, the relative ordering of education groups remains broadly consistent across employment, earnings, and weeks looking for work or on layoff.</p></li>
+<li><p><strong>These findings are descriptive rather than causal.</strong> The observed differences may also reflect other factors, such as work experience, occupation, industry, and demographic characteristics. Therefore, the analysis documents the relationship between education and labor market outcomes rather than identifying a causal effect of education.</p></li>
+</ul>
 
 
 </section>
