@@ -432,5 +432,47 @@
     "title": "Urbanization and Economic Development: An Interactive View",
     "section": "Takeaways",
     "text": "Takeaways\n\nHigher-income countries tend to be more urbanized. The visualization shows a broad positive relationship between real GDP per capita and the urban population share, but the relationship is far from uniform.\nCountries at similar income levels can have very different urbanization rates. Geographic and country-specific differences are an important part of the overall pattern.\nUrbanization and income often increase together over time. Many countries move upward and to the right between 2000 and 2024, but the magnitude of these changes varies substantially across countries.\nCountries follow different development paths. The animation reveals large differences in the speed and direction of changes in urbanization, including countries that show little change or even declines in their urban population share.\nInteractivity adds substantive value to the analysis. The ability to move through time, compare continents, and identify individual countries reveals patterns that would be difficult to communicate clearly in a single static graph.\n\nOverall, the visualization suggests that there is no single path from economic development to urbanization. Instead, countries share a broad pattern of higher income and greater urbanization while following substantially different trajectories over time."
+  },
+  {
+    "objectID": "blog/posts/post1/index.html",
+    "href": "blog/posts/post1/index.html",
+    "title": "Lagrange Multipliers: Making the Best Decision Under Constraints",
+    "section": "",
+    "text": "Imagine you are managing an investment fund. Your goal is simple: earn the highest possible return for your investors. However, you cannot invest however you like. Your fund has several rules: no single stock can account for more than 10% of the portfolio, and the maximum drawdown must remain below 30%. Maximum drawdown measures the largest cumulative decline in portfolio value from a previous peak to a subsequent low. It is one way of describing how much an investor could lose during a bad period.\nThere is another complication. In your estimates, investments with higher expected returns also tend to have greater downside risk. Putting everything into the investment with the highest expected return might therefore violate the fund’s risk limit.\nThis is a classic economic problem: how do we maximize an objective when some choices are not allowed? The method of Lagrange multipliers offers a systematic way to answer this question. It is useful not only in portfolio management but also in consumer choice, production planning, and resource allocation."
+  },
+  {
+    "objectID": "blog/posts/post1/index.html#the-fund-managers-dilemma",
+    "href": "blog/posts/post1/index.html#the-fund-managers-dilemma",
+    "title": "Lagrange Multipliers: Making the Best Decision Under Constraints",
+    "section": "",
+    "text": "Imagine you are managing an investment fund. Your goal is simple: earn the highest possible return for your investors. However, you cannot invest however you like. Your fund has several rules: no single stock can account for more than 10% of the portfolio, and the maximum drawdown must remain below 30%. Maximum drawdown measures the largest cumulative decline in portfolio value from a previous peak to a subsequent low. It is one way of describing how much an investor could lose during a bad period.\nThere is another complication. In your estimates, investments with higher expected returns also tend to have greater downside risk. Putting everything into the investment with the highest expected return might therefore violate the fund’s risk limit.\nThis is a classic economic problem: how do we maximize an objective when some choices are not allowed? The method of Lagrange multipliers offers a systematic way to answer this question. It is useful not only in portfolio management but also in consumer choice, production planning, and resource allocation."
+  },
+  {
+    "objectID": "blog/posts/post1/index.html#turning-the-problem-into-mathematics",
+    "href": "blog/posts/post1/index.html#turning-the-problem-into-mathematics",
+    "title": "Lagrange Multipliers: Making the Best Decision Under Constraints",
+    "section": "Turning the Problem into Mathematics",
+    "text": "Turning the Problem into Mathematics\nTo understand the basic idea, let us simplify the fund’s investment choices into two categories. The first is a diversified equity portfolio, with an expected annual return of 12%. The second is a lower-risk asset portfolio, with an expected annual return of 4%. Let \\(x\\) and \\(y\\) represent the proportions invested in each category.\nBecause the fund must invest all its money,\n\\[\nx+y=1.\n\\]\nIts expected annual return, measured in percentage points, is\n\\[\nR(x,y)=12x+4y.\n\\]\nWe also impose a simplified risk constraint:\n\\[\nD(x)=8+44x\\leq 30.\n\\]\nHere, \\(D(x)\\) is an illustrative stress-risk score, expressed in percentage points. Its coefficients are hypothetical and are chosen only to demonstrate the method; it is not a forecast of actual maximum drawdown. The constraint implies that \\(x\\leq 0.5\\).\nWithout a risk limit, the fund would put all its money into equities because their expected return is higher. With the limit, however, the most it can allocate to equities is 50%. The best feasible allocation is therefore \\(x=0.5\\) and \\(y=0.5\\), producing an expected return of 8%.\nBut how can we find this solution systematically, especially when there are many assets and constraints? This is where Lagrange multipliers become useful."
+  },
+  {
+    "objectID": "blog/posts/post1/index.html#the-logic-of-the-lagrangian",
+    "href": "blog/posts/post1/index.html#the-logic-of-the-lagrangian",
+    "title": "Lagrange Multipliers: Making the Best Decision Under Constraints",
+    "section": "The Logic of the Lagrangian",
+    "text": "The Logic of the Lagrangian\nInstead of treating the objective and constraints as entirely separate problems, we combine them into one function:\n\\[\n\\begin{aligned}\n\\mathcal{L}(x,y,\\lambda,\\mu)\n={}&12x+4y\\\\\n&+\\lambda(1-x-y)\\\\\n&+\\mu\\left[30-(8+44x)\\right].\n\\end{aligned}\n\\]\nThe first term represents the return we want to maximize. The second incorporates the requirement that the entire portfolio be allocated. The third incorporates the risk limit. The new variables \\(\\lambda\\) and \\(\\mu\\), called Lagrange multipliers, allow the optimization conditions to account for these restrictions.\nThe basic procedure is to find the point where the partial derivatives with respect to the decision variables are zero, while ensuring that the constraints are satisfied. For this example, the first-order conditions include\n\\[\n\\frac{\\partial\\mathcal{L}}{\\partial y}=4-\\lambda=0\n\\]\nand\n\\[\n\\frac{\\partial\\mathcal{L}}{\\partial x}=12-\\lambda-44\\mu=0.\n\\]\nThese imply \\(\\lambda=4\\) and \\(\\mu=8/44\\approx 0.182\\). Because the risk limit binds at the optimum, \\(8+44x=30\\), giving \\(x=0.5\\) and \\(y=0.5\\).\nThe important insight is that the multipliers are not arbitrary penalties selected by the fund manager. They are determined by the optimization conditions. In more general problems with inequality constraints, complementary slackness helps determine whether each constraint actually binds."
+  },
+  {
+    "objectID": "blog/posts/post1/index.html#what-does-the-multiplier-tell-us",
+    "href": "blog/posts/post1/index.html#what-does-the-multiplier-tell-us",
+    "title": "Lagrange Multipliers: Making the Best Decision Under Constraints",
+    "section": "What Does the Multiplier Tell Us?",
+    "text": "What Does the Multiplier Tell Us?\nThe multiplier \\(\\mu\\) is the shadow price of the risk constraint. It measures how much the maximum expected return changes when the risk limit is relaxed by one unit, near the optimum.\nHere, \\(\\mu=8/44\\approx 0.182\\). Raising the risk-score ceiling from 30 to 31 allows a larger equity allocation, increasing the model’s maximum expected annual return from 8.00% to about 8.18%. The multiplier therefore puts a number on the trade-off between accepting more risk and earning a higher return. This is a local result from our simplified model, not a guarantee about real investment performance.\nIn more complex problems, inequality constraints are handled using the Karush–Kuhn–Tucker (KKT) conditions, which also identify whether a constraint is binding at the optimum."
+  },
+  {
+    "objectID": "blog/posts/post1/index.html#takeaways",
+    "href": "blog/posts/post1/index.html#takeaways",
+    "title": "Lagrange Multipliers: Making the Best Decision Under Constraints",
+    "section": "Takeaways",
+    "text": "Takeaways\n\nSet the objective and constraints. Define what you want to maximize or minimize, then specify the limits that feasible choices must satisfy.\nBuild the Lagrangian. Combine the objective function and constraints using Lagrange multipliers, then use the first-order conditions and the constraints to find the optimum.\nInterpret the multipliers. A multiplier on a binding constraint measures the marginal value of relaxing that constraint—the change in the best achievable objective from a small relaxation.\nUse the result to make decisions. Multipliers show which constraints are costly and help evaluate whether relaxing a limit could improve the outcome."
   }
 ]
