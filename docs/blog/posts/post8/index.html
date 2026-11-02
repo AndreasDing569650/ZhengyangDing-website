@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.25">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="dcterms.date" content="2026-11-01">
+
+<title>Simulation, Bootstrap Confidence Intervals, and Hypothesis Testing – Student Name</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../../">
+<script src="../../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-7b89279ff1a6dce999919e0e67d4d9ec.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../../site_libs/bootstrap/bootstrap-ffa9a6279353761231ec249df0a7fdd3.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../../styles.css">
+</head>
+
+<body class="nav-fixed fullcontent quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="../../../index.html" class="navbar-brand navbar-brand-logo">
+    </a>
+    <a class="navbar-brand" href="../../../index.html">
+    <span class="navbar-title">Student Name</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../../bio.html"> 
+<span class="menu-text">About Me</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../../resume.html"> 
+<span class="menu-text">Resume</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../../blog/index.html"> 
+<span class="menu-text">Blog</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Simulation, Bootstrap Confidence Intervals, and Hypothesis Testing</h1>
+  <div class="quarto-categories">
+    <div class="quarto-category">statistics</div>
+    <div class="quarto-category">simulation</div>
+    <div class="quarto-category">interaction visualization</div>
+  </div>
+  </div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">November 1, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="introduction" class="level2">
+<h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
+<p>Statistical inference is about learning something about a population from a sample. However, concepts such as confidence intervals and p-values can be difficult to understand from formulas alone.</p>
+<p>Simulation provides an intuitive way to see how these ideas work. Instead of starting with theoretical distributions, we can repeatedly generate data and observe what happens.</p>
+<p>In this post, I use simulation to demonstrate three ideas:</p>
+<ol type="1">
+<li>how a bootstrap confidence interval is constructed;</li>
+<li>why a 95% confidence interval covers the true parameter approximately 95% of the time; and</li>
+<li>how hypothesis tests use a null distribution, rejection regions, and p-values.</li>
+</ol>
+<p>The goal is to understand statistical inference by <strong>seeing the distributions generated by repeated samples</strong>.</p>
+<hr>
+</section>
+<section id="building-a-bootstrap-confidence-interval" class="level2">
+<h2 class="anchored" data-anchor-id="building-a-bootstrap-confidence-interval">1. Building a Bootstrap Confidence Interval</h2>
+<p>Suppose the population has a mean of 50 and a standard deviation of 10. We draw a sample of 50 observations from this population.</p>
+<p>In practice, we usually do not know the population distribution. More importantly, we only have one observed sample. The bootstrap provides a way to approximate the sampling distribution of an estimator using the sample itself.</p>
+<p>The procedure is:</p>
+<ol type="1">
+<li>Draw one sample from the population.</li>
+<li>Treat the observed sample as an approximation to the population.</li>
+<li>Repeatedly draw new samples from the observed sample <strong>with replacement</strong>.</li>
+<li>Calculate the sample mean for each bootstrap sample.</li>
+<li>Use the resulting bootstrap distribution to construct a confidence interval.</li>
+</ol>
+<p>Here, I generate 5,000 bootstrap samples.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="figure/bootstrap_distribution.png" class="img-fluid figure-img"></p>
+<figcaption>Bootstrap Distribution of the Sample Mean</figcaption>
+</figure>
+</div>
+<p>The histogram shows the distribution of the means calculated from the bootstrap samples. The solid vertical line represents the original sample mean, while the two dashed lines mark the lower and upper bounds of the 95% bootstrap confidence interval. The dotted line marks the true population mean.</p>
+<p>The important point is that the bootstrap distribution represents the variation we would expect in the sample mean if we repeatedly resampled from the population. Since the population itself is unavailable in a real empirical application, the observed sample provides the information needed to approximate this distribution.</p>
+<p>The confidence interval is then constructed from the tails of the bootstrap distribution:</p>
+<p><span class="math display">\[
+CI_{95\%}
+=
+\left[
+Q_{0.025},
+Q_{0.975}
+\right]
+\]</span></p>
+<p>where <span class="math inline">\(Q_{0.025}\)</span> and <span class="math inline">\(Q_{0.975}\)</span> are the 2.5th and 97.5th percentiles of the bootstrap distribution.</p>
+<section id="try-it-yourself" class="level3">
+<h3 class="anchored" data-anchor-id="try-it-yourself">Try It Yourself</h3>
+<p>The following interactive visualization lets you change the sample size, number of bootstrap samples, confidence level, and true population mean.</p>
+<iframe src="figure/bootstrap_interactive.html" width="100%" height="700px" frameborder="0">
+</iframe>
+<p>The interactive demonstration makes several patterns visible.</p>
+<p>A larger sample generally produces a narrower bootstrap distribution because the sample mean becomes more precise. Increasing the number of bootstrap samples makes the simulated distribution more stable, while changing the confidence level changes how much of the bootstrap distribution is included in the interval.</p>
+<p>The interactive visualization is generated as a standalone HTML file, so the simulation runs directly in the browser. The controls allow the reader to change the parameters and immediately see how the bootstrap distribution and confidence interval respond.</p>
+<hr>
+</section>
+</section>
+<section id="does-a-95-confidence-interval-really-cover-the-truth-95-of-the-time" class="level2">
+<h2 class="anchored" data-anchor-id="does-a-95-confidence-interval-really-cover-the-truth-95-of-the-time">2. Does a 95% Confidence Interval Really Cover the Truth 95% of the Time?</h2>
+<p>A single confidence interval either contains the true population parameter or it does not. The meaning of a 95% confidence level becomes clearer when we repeat the entire sampling process many times.</p>
+<p>For each simulation, I:</p>
+<ol type="1">
+<li>draw a new sample from the population;</li>
+<li>construct a bootstrap confidence interval;</li>
+<li>check whether the interval contains the true population mean of 50.</li>
+</ol>
+<p>I repeat this process 1,000 times.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="figure/coverage_simulation.png" class="img-fluid figure-img"></p>
+<figcaption>Coverage of 95% Confidence Intervals</figcaption>
+</figure>
+</div>
+<p>Each horizontal line represents one simulated confidence interval. The vertical dashed line represents the true population mean.</p>
+<p>In the simulation, <strong>93.8% of the intervals contain the true population mean</strong>.</p>
+<p>This is close to the intended 95% coverage rate. The result is not exactly 95% because the experiment itself is random: with only 1,000 simulations, the estimated coverage rate will naturally fluctuate around the target.</p>
+<p>The key idea is therefore about <strong>repeated sampling</strong>. A 95% confidence procedure is designed so that, over many repeated samples, approximately 95% of the resulting intervals contain the true parameter.</p>
+<p>This interpretation is different from saying that there is a 95% probability that the particular interval calculated from one sample contains the parameter. Once the interval has been calculated, the parameter either lies inside it or it does not. The 95% refers to the long-run performance of the procedure.</p>
+<hr>
+</section>
+<section id="simulating-a-hypothesis-test" class="level2">
+<h2 class="anchored" data-anchor-id="simulating-a-hypothesis-test">3. Simulating a Hypothesis Test</h2>
+<p>Confidence intervals are one way to quantify uncertainty. Hypothesis testing provides another way to ask whether an observed result is unusual under a particular assumption.</p>
+<p>Suppose we want to test:</p>
+<p><span class="math display">\[
+H_0: \mu = 50
+\]</span></p>
+<p>against the two-sided alternative:</p>
+<p><span class="math display">\[
+H_1: \mu \neq 50
+\]</span></p>
+<p>The first step is to simulate what the test statistic would look like <strong>if the null hypothesis were true</strong>.</p>
+<p>For each simulation, I generate a sample from a population with mean 50 and standard deviation 10. I then calculate the standardized test statistic:</p>
+<p><span class="math display">\[
+Z =
+\frac{\bar{X}-\mu_0}
+{\sigma/\sqrt{n}}
+\]</span></p>
+<p>Repeating this process 10,000 times produces an empirical null distribution.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="figure/null_distribution.png" class="img-fluid figure-img"></p>
+<figcaption>Simulated Null Distribution</figcaption>
+</figure>
+</div>
+<p>The distribution is centered around zero because the samples are generated under the null hypothesis. Most simulated test statistics are relatively close to zero, while values far from zero are less common.</p>
+<p>For a two-sided test with significance level <span class="math inline">\(\alpha=0.05\)</span>, the most extreme 5% of the null distribution defines the rejection region.</p>
+<p>The dashed lines in the figure mark these critical regions. If an observed test statistic falls beyond either boundary, it would be sufficiently unusual under the null hypothesis to reject <span class="math inline">\(H_0\)</span> at the 5% significance level.</p>
+<p>This gives us a useful visual interpretation of hypothesis testing:</p>
+<blockquote class="blockquote">
+<p><strong>The rejection region consists of outcomes that are sufficiently unusual under the null hypothesis.</strong></p>
+</blockquote>
+<hr>
+</section>
+<section id="from-rejection-regions-to-p-values" class="level2">
+<h2 class="anchored" data-anchor-id="from-rejection-regions-to-p-values">4. From Rejection Regions to p-Values</h2>
+<p>Instead of simply asking whether the observed statistic crosses a critical value, we can ask a more general question:</p>
+<blockquote class="blockquote">
+<p>How unusual is the observed statistic under the null hypothesis?</p>
+</blockquote>
+<p>Suppose the observed test statistic is:</p>
+<p><span class="math display">\[
+z_{obs}=2.4
+\]</span></p>
+<p>We can compare this value with the simulated null distribution.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="figure/p_value.png" class="img-fluid figure-img"></p>
+<figcaption>Observed Test Statistic and the Null Distribution</figcaption>
+</figure>
+</div>
+<p>Because this is a two-sided test, we consider simulated statistics at least as far from zero as the observed statistic. In other words, we count simulations satisfying</p>
+<p><span class="math display">\[
+|Z| \geq |z_{obs}|.
+\]</span></p>
+<p>The simulated p-value is therefore</p>
+<p><span class="math display">\[
+p
+=
+P\left(|Z|\geq |z_{obs}| \mid H_0\right).
+\]</span></p>
+<p>In the simulation, the estimated p-value is <strong>0.013</strong>.</p>
+<p>This means that approximately 1.3% of the simulated test statistics under the null hypothesis were at least as extreme as the observed statistic.</p>
+<p>Since</p>
+<p><span class="math display">\[
+0.013 &lt; 0.05,
+\]</span></p>
+<p>the observed statistic falls in the rejection region, and we reject the null hypothesis at the 5% significance level.</p>
+<p>The visualization makes the relationship between the two concepts clear:</p>
+<ul>
+<li><strong>Rejection region:</strong> a pre-defined region of sufficiently unusual outcomes based on the chosen significance level.</li>
+<li><strong>p-value:</strong> the probability, under the null hypothesis, of observing a test statistic at least as extreme as the one actually observed.</li>
+</ul>
+<p>The p-value is therefore <strong>not</strong> the probability that the null hypothesis is true. It measures how unusual the observed result is under the assumption that the null hypothesis is true.</p>
+<hr>
+</section>
+<section id="what-the-simulations-show" class="level2">
+<h2 class="anchored" data-anchor-id="what-the-simulations-show">5. What the Simulations Show</h2>
+<p>The simulations connect several ideas that are often introduced separately.</p>
+<section id="bootstrap-confidence-intervals" class="level3">
+<h3 class="anchored" data-anchor-id="bootstrap-confidence-intervals">Bootstrap confidence intervals</h3>
+<p>A bootstrap distribution is created by repeatedly resampling from the observed sample. It provides an empirical approximation to the sampling distribution of an estimator and can be used to construct a confidence interval.</p>
+</section>
+<section id="confidence-interval-coverage" class="level3">
+<h3 class="anchored" data-anchor-id="confidence-interval-coverage">Confidence interval coverage</h3>
+<p>A 95% confidence procedure is designed to contain the true parameter in approximately 95% of repeated samples. In the simulation, 93.8% of the intervals contained the true mean, illustrating this long-run interpretation.</p>
+</section>
+<section id="hypothesis-testing" class="level3">
+<h3 class="anchored" data-anchor-id="hypothesis-testing">Hypothesis testing</h3>
+<p>A null distribution shows what the test statistic looks like when the null hypothesis is true. Observations in the tails of this distribution are less consistent with the null hypothesis.</p>
+</section>
+<section id="rejection-regions-and-p-values" class="level3">
+<h3 class="anchored" data-anchor-id="rejection-regions-and-p-values">Rejection regions and p-values</h3>
+<p>The rejection region identifies outcomes sufficiently extreme to reject the null at a chosen significance level. The p-value measures how much probability under the null lies at or beyond the observed test statistic.</p>
+<hr>
+</section>
+</section>
+<section id="takeaways" class="level2">
+<h2 class="anchored" data-anchor-id="takeaways">Takeaways</h2>
+<ul>
+<li><p><strong>Simulation makes statistical inference visible.</strong> Repeatedly generating samples allows us to see the distributions behind confidence intervals and hypothesis tests.</p></li>
+<li><p><strong>Bootstrap confidence intervals use the observed sample to approximate sampling uncertainty.</strong> Repeated resampling produces a bootstrap distribution from which the interval can be constructed.</p></li>
+<li><p><strong>A 95% confidence level describes long-run coverage.</strong> In repeated sampling, approximately 95% of intervals constructed by the procedure should contain the true population parameter.</p></li>
+<li><p><strong>Hypothesis tests compare observed statistics with a null distribution.</strong> Values far into the tails are unusual under the null hypothesis and may fall in the rejection region.</p></li>
+<li><p><strong>A p-value measures extremeness under the null hypothesis.</strong> It is the probability of obtaining a test statistic at least as extreme as the observed one, assuming the null hypothesis is true.</p></li>
+</ul>
+<p>The central idea throughout this post is simple: <strong>statistical inference can be understood by repeatedly simulating the data-generating process and observing how estimates and test statistics behave.</strong></p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p><img src="../../..\images/UniversityofPennsylvania_FullLogo_RGB.png" class="img-fluid" width="100"></p>
+</div>   
+    <div class="nav-footer-center">
+<p>© 2026 Student Name</p>
+</div>
+    <div class="nav-footer-right">
+      &nbsp;
+    </div>
+  </div>
+</footer>
+
+
+
+
+</body></html>
