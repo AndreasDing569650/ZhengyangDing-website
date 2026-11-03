@@ -12,7 +12,7 @@ Urbanization is an important part of economic development. As countries become r
 
 This blog post explores the following question:
 
-**how are countries' levels of urbanization related to real GDP per capita, and how do countries follow different development paths over time?**
+**How are countries' levels of urbanization related to real GDP per capita, and how do countries follow different development paths over time?**
 
 The analysis covers countries and economies from 2000 to 2024. By combining real GDP per capita with the share of the population living in urban areas, the visualization allows us to examine both differences across countries and changes within countries over time.
 
@@ -41,9 +41,11 @@ There are also clear differences across continents. European countries are gener
 
 Asian countries span a particularly wide range, including low-income and less-urbanized countries as well as high-income and highly urbanized economies. The Americas and Oceania also include countries with relatively high urbanization despite not being among the highest-income economies.
 
-The time animation reveals another important pattern. From 2000 to 2024, many countries move **both upward and to the right**, indicating increases in urbanization and real GDP per capita. African and European countries move at a mild pace, remaining their relative positions unchanged, as they remain at two different sides of the graph. Meanwhile, Asian countries move in a more aggressive way, as shifts are drastic across time for some countries, and while some countries went further urbanized, some went in the opposite direction.
+The time animation reveals another important pattern. From 2000 to 2024, many countries **move both upward and to the right**, indicating increases in urbanization and real GDP per capita.
 
-Some countries exhibit strong development performance and urbanization during our observation window. China provides a particularly visible example. Its urban population share increased from about 36% in 2000 to about 66% in 2024, while its real GDP per capita also increased substantially. Türkiye and Thailand show similarly pronounced movements toward higher urbanization and income.
+Most European countries grow at a mild pace regarding both urbanization and economic growth. African countries perform less stable development, while Africa's overall state remains stable. Africa and Europe stay at two different sides of the graph across time (Africa at the left, Europe at the right). North and South American countries demonstrate a less centralized distribution with mild growth.
+
+Meanwhile, some Asian countries move in a more aggressive way. Some countries exhibit strong development performance and urbanization during our observation window, and China provides a particularly visible example. Its urban population share increased from about 36% in 2000 to about 66% in 2024, while its real GDP per capita also increased substantially. Türkiye and Thailand show similarly pronounced movements toward higher urbanization and income.
 
 The interactive features therefore add substantive information beyond a static scatterplot. The **year slider and animation** allow readers to observe changes over time, the **continent colors** make geographic differences easier to compare, and the **hover information** allows individual countries to be identified and examined. Readers can move from the overall pattern to specific countries and back again without needing separate figures for different years or groups.
 
@@ -53,7 +55,7 @@ The interactive features therefore add substantive information beyond a static s
 
 - **Countries at similar income levels can have very different urbanization rates.** Geographic and country-specific differences are an important part of the overall pattern.
 
-- **Urbanization and income often increase together over time.** Many countries move upward and to the right between 2000 and 2024, but the magnitude of these changes varies substantially across countries. For instance, African and European countries grew steadily and mildly, while Asian countries move more aggressively.
+- **Urbanization and income often increase together over time.** Many countries move upward and to the right between 2000 and 2024, but the magnitude of these changes varies substantially across countries. For instance, European countries grew steadily and mildly, while Asian countries move more aggressively.
 
 - **Countries follow different development paths.** The animation reveals large differences in the speed and direction of changes in urbanization, including countries that show little change or even declines in their urban population share.
 
