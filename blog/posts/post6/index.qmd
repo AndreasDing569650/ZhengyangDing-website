@@ -41,7 +41,7 @@ import pandas as pd
 import sqlite3
 from pathlib import Path
 
-project_root = Path(r"C:\Users\lenovo\PycharmProjects\6400_blog_6")
+project_root = Path(r"ENTER YOUR PROJECT PATH")
 cleaned_dir = project_root / "data" / "cleaned_data"
 
 individual_data = pd.read_csv(
@@ -414,7 +414,7 @@ Averaging income across multiple years can reduce the influence of temporary inc
 
 In our results, the estimated IGE increases from **0.245** using 2022 income to **0.280** using the 2020–2022 average. The R-squared also increases from **0.065** to **0.092**. This comparison illustrates how the estimated degree of intergenerational persistence can change when income is measured over a longer period.
 
-## The Takeaway
+## Takeaways
 
 This project demonstrates how SQL can be used to solve a longitudinal parent-child matching problem using PSID data.
 
