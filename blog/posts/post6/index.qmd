@@ -8,37 +8,51 @@ categories:
 
 ## Introduction
 
-Inter-generational income mobility studies the extent to which economic outcomes are associated across generations. To estimate this relationship, we first need to identify which children belong to which parents and then construct comparable measures of family income for each generation.
+How can we connect children to their biological parents in data that follow people over time? And once we make that connection, how similar are the incomes of parents and their children?
 
-This project uses data from the Panel Study of Income Dynamics (PSID) and implements the parent-child matching procedure in Python with SQLite. The analysis has three main steps. First, the raw individual-level PSID data are reshaped into a longitudinal person-year dataset. Second, biological mothers and fathers are identified using the PSID parent-identification file and matched to their children with SQL. Finally, parent and child family income are constructed for both 2022 and the 2020–2022 period and used to estimate intergenerational income elasticity (IGE).
+These questions matter because intergenerational income mobility tells us how strongly economic position is related across generations. To study it, we first need to know which parent records belong to which child. We then need income measures that represent more than a single unusual year.
 
-The main purpose of the SQL stage is to connect parent identifiers with longitudinal individual records, impose the required family restrictions, and aggregate income across parents and years.
+This tutorial uses the **Panel Study of Income Dynamics (PSID)** and shows how to use **SQL in Python with SQLite** to build a parent-child match. After matching the two generations, I compare two ways to measure income: income in 2022 alone and average income across 2020 and 2022 (the 2021 survey reports family income for 2020, while the 2023 survey reports family income for 2022). I then use both measures to estimate intergenerational income elasticity (IGE).
+
+The goal is to show how a few SQL operations can turn separate relationship and income files into a dataset that can answer an economic question.
 
 ## Data and Matching Problem
 
-The PSID provides information on individuals, families, and family relationships over time. The individual data used in this project contain observations for 2020 and 2022. Each individual is identified using a permanent person identifier constructed from the PSID family and person identifiers.
+The data come from the **Panel Study of Income Dynamics (PSID)**. This project uses individual and family information for 2020 and 2022, along with a parent-identification file that records biological parent-child relationships.
 
-After processing the raw data, the longitudinal dataset contains variables such as:
+The cleaned longitudinal file is organized by person and year. Its main variables are:
 
-- `person_id`: permanent individual identifier
-- `family_id`: family identifier in the corresponding survey year
-- `family_income`: total income of the individual's family unit
+- `person_id`: a permanent identifier for an individual across survey years
+- `family_id`: the family unit the individual belongs to in a particular year
+- `family_income`: total income of that individual's family unit
 - `year`: survey year
-- `age`: individual's age
+- `age`: the individual's age in that year
 
-The parent-identification file provides the identifiers needed to connect a child to their biological mother and father. The relevant variables are `PID2`, `PID3` for the child, `PID4`, `PID5` for the biological mother, and `PID23`, `PID24` for the biological father.
+It is important to distinguish `person_id` from `family_id`. A person keeps the same permanent `person_id` over time, but their `family_id` can change if their family living arrangement changes.
 
-The first step is to convert these identifier components into the same `person_id` format used in the longitudinal individual data. This makes it possible to connect the parent-identification records directly to the individual-level observations.
+The permanent person identifier is built from the PSID's 1968 family interview number (`ER30001`) and person number (`ER30002`). The parent-identification file uses the same two-part structure for each relationship:
 
-The analysis constructs two income measures. The first uses family income observed in 2022. The second uses the average of family income observed in 2020 and 2022. In the final sample, both children and parents are restricted to ages 25–64 in 2022, and parent-child pairs are required to live in different families in the relevant year.
+| Person | Identifier components |
+|---|---|
+| Child | `PID2` and `PID3` |
+| Biological mother | `PID4` and `PID5` |
+| Biological father | `PID23` and `PID24` |
+
+Combining each pair into the same format—for example, `4_3`—allows the child and parent identifiers to be matched to `person_id` in the longitudinal file. For an individual record, the same rule is applied to `ER30001` and `ER30002`; for a parent-identification record, it is applied to the relevant PID pair.
+
+The analysis creates two income measures. The first uses family income in 2022. The second averages family income in 2020 and 2022. For the final sample, the child's age and the average age of the matched parent observations must both be between 25 and 64 in 2022. Parent observations are included only when the parent and child belong to different family units in the relevant year.
 
 ## Loading the Data into SQLite
 
-After the data-processing step, the two cleaned files are loaded into an SQLite database. The individual-level data are stored in an `individual` table, while the parent-identification data are stored in a separate `parent_identification` table.
+After the raw files have been cleaned, the two datasets are loaded into an SQLite database. The individual-level data are stored in an `individual` table. The parent-identification data are stored in a separate `parent_identification` table.
+
+The cleaned `individual_long.csv` file already contains `person_id`, constructed from `ER30001` and `ER30002`. The parent-identification file contains the original PID components, so I convert those components into the same ID format before loading the table.
 
 ```python
 import pandas as pd
+import numpy as np
 import sqlite3
+import statsmodels.api as sm
 from pathlib import Path
 
 project_root = Path(r"ENTER YOUR PROJECT PATH")
@@ -50,6 +64,39 @@ individual_data = pd.read_csv(
 
 parent_identification = pd.read_csv(
     cleaned_dir / "parent_identification.csv"
+)
+
+def make_person_id(family_id, person_number):
+    if pd.isna(family_id) or pd.isna(person_number):
+        return None
+
+    family_id = int(family_id)
+    person_number = int(person_number)
+
+    if family_id <= 0 or person_number <= 0:
+        return None
+
+    return f"{family_id}_{person_number}"
+
+# During individual-data cleaning, this same function is applied to:
+# individual_data["person_id"] = individual_data.apply(
+#     lambda row: make_person_id(row["ER30001"], row["ER30002"]),
+#     axis=1
+# )
+
+parent_identification["child_id"] = parent_identification.apply(
+    lambda row: make_person_id(row["PID2"], row["PID3"]),
+    axis=1
+)
+
+parent_identification["mother_id"] = parent_identification.apply(
+    lambda row: make_person_id(row["PID4"], row["PID5"]),
+    axis=1
+)
+
+parent_identification["father_id"] = parent_identification.apply(
+    lambda row: make_person_id(row["PID23"], row["PID24"]),
+    axis=1
 )
 
 conn = sqlite3.connect(
@@ -75,9 +122,9 @@ parent_identification[
 )
 ```
 
-The two tables play different roles. The `parent_identification` table describes the family relationship, while the `individual` table contains the longitudinal information needed to measure income, family membership, and age.
+The two tables have different jobs. The `parent_identification` table tells us who is related to whom. The `individual` table tells us each person's family income, family membership, and age in each survey year.
 
-Indexes are then created on the identifiers used repeatedly in the SQL joins.
+Indexes are created on the identifiers used in the SQL joins. They help SQLite find matching records more efficiently.
 
 ```python
 cursor = conn.cursor()
@@ -97,9 +144,11 @@ conn.commit()
 
 ## Constructing the Parent-Child Relationship
 
-The parent-identification file contains separate identifiers for the biological mother and father. To make the subsequent SQL operations more straightforward, these two relationships are converted into a single parent-child bridge table.
+The parent-identification file stores the biological mother and father in separate columns. I turn these two relationships into one bridge table called `parent_child`. This makes the next step easier because each row represents one child-parent link.
 
 ```python
+cursor.execute("DROP TABLE IF EXISTS parent_child")
+
 cursor.execute("""
 CREATE TABLE parent_child AS
 
@@ -123,15 +172,24 @@ WHERE father_id IS NOT NULL
 conn.commit()
 ```
 
-The resulting table contains one row for each child-parent relationship. A child with both a biological mother and father can therefore appear twice, once for each parent.
+`UNION ALL` stacks the mother records and father records. A child with both biological parents identified therefore appears twice: once for the mother and once for the father.
 
-This bridge table separates the relationship information from the longitudinal information. The `parent_child` table tells us **who is connected to whom**, while the `individual` table tells us **what each person's family income, family membership, and age were in a given year**.
+The bridge table tells us **who is connected to whom**. The `individual` table tells us **what each person's income, family membership, and age were in a given year**. The SQL joins connect these two pieces of information.
+
+### A quick guide to the SQL operations
+
+- **`SELECT`** chooses which columns or calculated values should appear in the query result. Here, it selects the child ID, parent income, child income, and age.
+- **`JOIN`** connects records from different tables. I join the bridge table to `individual` to retrieve the parent's and child's observations.
+- **`GROUP BY`** puts rows with the same child ID into a group, so the query can produce one matched record for each child.
+- **Aggregation**, such as `AVG()`, calculates a summary for each group. Here, it averages the family income of the qualifying parent observations.
+
+These operations work together: `JOIN` finds the relevant records, `GROUP BY` organizes them by child, and `AVG()` summarizes the parent observations.
 
 ## Matching Parents and Children in 2022
 
-We first construct the single-year income measure using observations from 2022.
+I start with the single-year measure and use observations from 2022.
 
-The SQL query joins the parent-child bridge table to the individual data twice: once to obtain the parent's 2022 observation and once to obtain the child's 2022 observation.
+The query joins the `parent_child` bridge table to the `individual` table twice. The first join retrieves the parent's 2022 record. The second retrieves the child's 2022 record.
 
 ```python
 single_year_query = """
@@ -174,23 +232,21 @@ single_year = pd.read_sql_query(
 )
 ```
 
-The first `JOIN` retrieves the parent's 2022 observation, while the second retrieves the child's observation from the same longitudinal table. The condition
+The `SELECT` statement lists the information I want in the result. The two `JOIN` operations attach the parent's and child's 2022 records to the same child ID. The condition
 
-```python
+```sql
 WHERE parent.family_id != child.family_id
 ```
 
-requires the parent and child to belong to different families in 2022.
+keeps parent observations only when the parent and child belong to different family units in 2022.
 
-The query then uses `GROUP BY` to organize the matched observations by child. Since a child can be linked to both a biological mother and father, `AVG(parent.family_income)` combines the available parent income observations into a single parent-income measure. The same aggregation is used for parent age.
+The query then uses `GROUP BY` to organize the qualifying parent observations by child. `AVG(parent.family_income)` calculates the average family income across the matched biological-parent observations that meet the family-separation condition. If both parent observations qualify, their family incomes are averaged; if only one qualifies, that observation supplies the parent-income measure. This is an average of family-unit income, not the sum of the parents' personal earnings.
 
-The resulting variables are therefore `parent_income_2022`, `child_income_2022`, `child_age_2022`, and `parent_age_2022`.
+The child's income is the family income of the family unit the child belongs to in 2022. The query also calculates the average age of the qualifying parent observations. These variables are returned as `parent_income_2022`, `child_income_2022`, `child_age_2022`, and `parent_age_2022`.
 
 ## Constructing the 2020–2022 Income Measure
 
-The second income measure uses information from both 2020 and 2022. Instead of relying on a single year's income, we construct an average income measure across the two survey years.
-
-The SQL query retrieves observations for both generations in both years:
+The second measure uses both 2020 and 2022. Instead of relying on income from one survey year, I first retrieve the income observations for each generation in both years.
 
 ```python
 multi_year_query = """
@@ -250,9 +306,11 @@ multi_year = pd.read_sql_query(
 )
 ```
 
-Here, the parent and child observations are matched across both years. The family-separation condition is also imposed separately in 2020 and 2022, so the parent and child must belong to different families in both years.
+This query uses four joins because it needs a record for the parent and the child in each of the two years. Since these are inner joins, a matched child-parent relationship must have observations in both 2020 and 2022.
 
-After the SQL query returns the four income variables, Python constructs the two-year averages:
+The `WHERE` conditions apply the family-separation rule in each year. The parent observations used in the calculation must belong to a different family from the child in both 2020 and 2022.
+
+The query returns parent and child income separately for each year. Python then calculates the simple two-year average:
 
 ```python
 multi_year["parent_income_avg"] = (
@@ -266,7 +324,7 @@ multi_year["child_income_avg"] = (
 ) / 2
 ```
 
-The single-year and multi-year results are then merged using the child identifier:
+Finally, I merge the single-year and multi-year results using `child_id`:
 
 ```python
 matched_data = single_year.merge(
@@ -276,11 +334,11 @@ matched_data = single_year.merge(
 )
 ```
 
-This produces a dataset in which the same matched children have both the 2022 income measures and the 2020–2022 average income measures.
+The inner merge keeps children who have both measures. This gives us a common starting sample for comparing the 2022 income measure with the 2020–2022 average.
 
 ## Applying the Sample Restrictions
 
-Before estimating the regressions, the analysis removes observations with non-positive income. This is necessary because the regression uses logarithmic income.
+Before running the regressions, I keep observations with positive income. This is necessary because the models use the natural logarithm of income, which is not defined for zero or negative values.
 
 ```python
 matched_data = matched_data[
@@ -288,25 +346,45 @@ matched_data = matched_data[
     (matched_data["child_income_2022"] > 0) &
     (matched_data["parent_income_avg"] > 0) &
     (matched_data["child_income_avg"] > 0)
-]
+].copy()
 ```
 
-The working-age restriction is then applied using age in 2022:
+I then apply the working-age restriction using 2022 age:
 
 ```python
 matched_data = matched_data[
     matched_data["child_age_2022"].between(25, 64) &
     matched_data["parent_age_2022"].between(25, 64)
-]
+].copy()
 ```
 
-Thus, the final estimation sample contains parent-child pairs for which both generations are between 25 and 64 in 2022 and all income measures used in the regressions are positive.
+Here, `child_age_2022` is the child's age, while `parent_age_2022` is the average age of the qualifying parent observations. Both measures must fall between 25 and 64.
+
+One important step is to build both regression samples from this **same filtered matched dataset**. This keeps the single-year and multi-year estimates comparable.
+
+```python
+single_year = matched_data[
+    [
+        "child_id",
+        "parent_income_2022",
+        "child_income_2022"
+    ]
+].copy()
+
+multi_year = matched_data[
+    [
+        "child_id",
+        "parent_income_avg",
+        "child_income_avg"
+    ]
+].copy()
+```
 
 ## Estimating Intergenerational Income Elasticity
 
-The final step is to estimate the relationship between parent and child family income.
+Now that the parent-child match and income measures are ready, I estimate how strongly parents' income is associated with their children's income.
 
-The analysis uses a log-log specification:
+I use a log-log regression:
 
 $$
 \log(Y_i^{child})
@@ -318,9 +396,9 @@ $$
 \varepsilon_i.
 $$
 
-The coefficient $$\beta$$ is the intergenerational income elasticity (IGE). It measures how strongly differences in parent income are associated with differences in child income.
+The coefficient \(\beta\) is the **intergenerational income elasticity (IGE)**. For example, an IGE of 0.25 means that a 1% difference in parental income is associated with about a 0.25% difference in child income, on average.
 
-For the 2022 single-year measure, the analysis takes the natural logarithm of parent and child income and estimates the relationship using OLS:
+For the 2022 single-year measure, I take the natural log of parent and child income and estimate the model using OLS:
 
 ```python
 single_year["log_parent_income"] = np.log(
@@ -331,17 +409,17 @@ single_year["log_child_income"] = np.log(
     single_year["child_income_2022"]
 )
 
-X = sm.add_constant(
+X_single = sm.add_constant(
     single_year["log_parent_income"]
 )
 
 model_single = sm.OLS(
     single_year["log_child_income"],
-    X
+    X_single
 ).fit()
 ```
 
-The same procedure is applied to the 2020–2022 average income:
+I repeat the same steps using the 2020–2022 average:
 
 ```python
 multi_year["log_parent_income"] = np.log(
@@ -352,79 +430,53 @@ multi_year["log_child_income"] = np.log(
     multi_year["child_income_avg"]
 )
 
-X = sm.add_constant(
+X_multi = sm.add_constant(
     multi_year["log_parent_income"]
 )
 
 model_multi = sm.OLS(
     multi_year["log_child_income"],
-    X
+    X_multi
 ).fit()
 ```
 
-The analysis extracts the estimated IGE coefficient, standard error, p-value, sample size, and R-squared from each model and saves them to the regression results file.
+For each model, I record the IGE estimate, standard error, p-value, number of observations, and R-squared. The two models use the same filtered matched sample, so the comparison focuses on the income measure rather than a change in the sample.
 
 ## Results
 
-The two specifications produce the following results:
+The two models produce the following estimates:
 
 | Income measure | Observations | IGE | Standard Error | R-squared |
 |---|---:|---:|---:|---:|
 | 2022 single-year income | 1,635 | 0.245 | 0.023 | 0.065 |
 | 2020–2022 average income | 1,635 | 0.280 | 0.022 | 0.092 |
 
-For the 2022 single-year measure, the estimated IGE is **0.245** with a standard error of **0.023**. For the 2020–2022 average measure, the estimated IGE increases to **0.280**, with a standard error of **0.022**.
+With 2022 income alone, the estimated IGE is **0.245**. This means that a 1% difference in parental family income is associated with about a 0.245% difference in child family income.
 
-The results indicate a positive relationship between parent and child family income in both specifications. The higher IGE obtained using the two-year average also suggests that the estimated intergenerational income relationship is sensitive to how income is measured over time.
+When income is averaged across 2020 and 2022, the estimated IGE rises to **0.280**. In this specification, a 1% difference in parental family income is associated with about a 0.280% difference in child family income.
+
+The R-squared also rises from **0.065** to **0.092**. In this sample, the model using the two-year average accounts for more of the variation in child income. Overall, the estimates show that the measured intergenerational relationship depends partly on how income is measured.
 
 ## Life-Cycle Bias
 
-Income is not necessarily a stable measure of an individual’s long-run economic position. A person’s income in any particular year can contain temporary fluctuations. Using only one year’s income may therefore introduce measurement noise into the intergenerational income relationship.
+Income changes over a person's working life. Someone who is just starting a career may earn much less than they will later on. Someone further along in their career may be closer to their peak earnings. A single year's income can therefore reflect **when** we observe a person, not just their longer-run economic position.
 
-The single-year specification uses family income observed in 2022:
+This creates a problem for intergenerational income estimates. If we measure parents' and children's income at only one point in time, the estimate may be influenced by the life-cycle stages they happen to be in. A one-year snapshot can make long-run income differences look larger or smaller than they really are.
 
-$$
-\log(Y_i^{child,2022})
-=
-\alpha
-+
-\beta\log(Y_i^{parent,2022})
-+
-\varepsilon_i.
-$$
+Averaging income across years can help. It reduces the influence of an unusual year and makes the measure less dependent on one particular observation. In this project, the two-year average gives an IGE of **0.280**, compared with **0.245** using 2022 income alone. The higher estimate is consistent with the idea that a single-year measure may understate the persistence of income across generations in this sample.
 
-The alternative specification uses average family income over 2020 and 2022:
-
-$$
-\log\left(
-\frac{Y_i^{child,2020}+Y_i^{child,2022}}{2}
-\right)
-=
-\alpha
-+
-\beta
-\log\left(
-\frac{Y_i^{parent,2020}+Y_i^{parent,2022}}{2}
-\right)
-+
-\varepsilon_i.
-$$
-
-Averaging income across multiple years can reduce the influence of temporary income fluctuations and provide a measure that is closer to an individual’s longer-run economic position.
-
-In our results, the estimated IGE increases from **0.245** using 2022 income to **0.280** using the 2020–2022 average. The R-squared also increases from **0.065** to **0.092**. This comparison illustrates how the estimated degree of intergenerational persistence can change when income is measured over a longer period.
+This comparison illustrates why life-cycle timing and short-term income variation matter when measuring IGE. It does not show that averaging two years removes every source of life-cycle bias, but it does show that the estimated relationship changes when we use a measure that is less dependent on a single year's income.
 
 ## Takeaways
 
-This project demonstrates how SQL can be used to solve a longitudinal parent-child matching problem using PSID data.
+This project shows how SQL in Python can turn separate PSID relationship and income files into a matched parent-child dataset.
 
-The main steps are:
+The process is straightforward:
 
-1. **Reshape the PSID data into a person-year structure** so individuals can be tracked across 2020 and 2022.
-2. **Construct a parent-child bridge table** from the biological parent identifiers.
-3. **Use SQL `JOIN` operations** to connect parents and children to their individual-level observations.
-4. **Use `GROUP BY` and aggregation** to construct parent-level income and age measures.
-5. **Construct both single-year and multi-year income measures** to examine the sensitivity of IGE to income measurement.
-6. **Estimate log-log OLS regressions** to obtain the intergenerational income elasticity.
+1. Create a permanent `person_id` so the same individual can be followed across survey years.
+2. Use the parent-identification file to build a bridge table linking each child to their biological mother and father.
+3. Use SQL `SELECT` and `JOIN` to retrieve the parent and child records.
+4. Use `GROUP BY` and `AVG()` to summarize the qualifying parent observations and construct the parental income measure.
+5. Compare IGE estimates using 2022 income alone and the average of 2020 and 2022 income.
 
-The main lesson is that SQL provides a clear way to organize relationship matching, longitudinal joins, and aggregation when working with complex panel data. In this project, the parent-child bridge table connects the family relationship information to the longitudinal PSID records, while the SQL joins and aggregation operations transform those matched records into the income measures required for the final IGE analysis.
+The main takeaway is that **the way we measure income matters**. In this sample, the IGE is higher when income is averaged across two years rather than measured in 2022 alone. A multi-year average can give a more stable picture of long-run economic status because it relies less on one year's income. SQL makes the matching process organized and transparent, while the final regression connects the matched data to the economic question.

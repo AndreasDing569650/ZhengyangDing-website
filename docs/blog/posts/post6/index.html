@@ -219,66 +219,126 @@ window.Quarto = {
 
 <section id="introduction" class="level2">
 <h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
-<p>Inter-generational income mobility studies the extent to which economic outcomes are associated across generations. To estimate this relationship, we first need to identify which children belong to which parents and then construct comparable measures of family income for each generation.</p>
-<p>This project uses data from the Panel Study of Income Dynamics (PSID) and implements the parent-child matching procedure in Python with SQLite. The analysis has three main steps. First, the raw individual-level PSID data are reshaped into a longitudinal person-year dataset. Second, biological mothers and fathers are identified using the PSID parent-identification file and matched to their children with SQL. Finally, parent and child family income are constructed for both 2022 and the 2020–2022 period and used to estimate intergenerational income elasticity (IGE).</p>
-<p>The main purpose of the SQL stage is to connect parent identifiers with longitudinal individual records, impose the required family restrictions, and aggregate income across parents and years.</p>
+<p>How can we connect children to their biological parents in data that follow people over time? And once we make that connection, how similar are the incomes of parents and their children?</p>
+<p>These questions matter because intergenerational income mobility tells us how strongly economic position is related across generations. To study it, we first need to know which parent records belong to which child. We then need income measures that represent more than a single unusual year.</p>
+<p>This tutorial uses the <strong>Panel Study of Income Dynamics (PSID)</strong> and shows how to use <strong>SQL in Python with SQLite</strong> to build a parent-child match. After matching the two generations, I compare two ways to measure income: income in 2022 alone and average income across 2020 and 2022 (the 2021 survey reports family income for 2020, while the 2023 survey reports family income for 2022). I then use both measures to estimate intergenerational income elasticity (IGE).</p>
+<p>The goal is to show how a few SQL operations can turn separate relationship and income files into a dataset that can answer an economic question.</p>
 </section>
 <section id="data-and-matching-problem" class="level2">
 <h2 class="anchored" data-anchor-id="data-and-matching-problem">Data and Matching Problem</h2>
-<p>The PSID provides information on individuals, families, and family relationships over time. The individual data used in this project contain observations for 2020 and 2022. Each individual is identified using a permanent person identifier constructed from the PSID family and person identifiers.</p>
-<p>After processing the raw data, the longitudinal dataset contains variables such as:</p>
+<p>The data come from the <strong>Panel Study of Income Dynamics (PSID)</strong>. This project uses individual and family information for 2020 and 2022, along with a parent-identification file that records biological parent-child relationships.</p>
+<p>The cleaned longitudinal file is organized by person and year. Its main variables are:</p>
 <ul>
-<li><code>person_id</code>: permanent individual identifier</li>
-<li><code>family_id</code>: family identifier in the corresponding survey year</li>
-<li><code>family_income</code>: total income of the individual’s family unit</li>
+<li><code>person_id</code>: a permanent identifier for an individual across survey years</li>
+<li><code>family_id</code>: the family unit the individual belongs to in a particular year</li>
+<li><code>family_income</code>: total income of that individual’s family unit</li>
 <li><code>year</code>: survey year</li>
-<li><code>age</code>: individual’s age</li>
+<li><code>age</code>: the individual’s age in that year</li>
 </ul>
-<p>The parent-identification file provides the identifiers needed to connect a child to their biological mother and father. The relevant variables are <code>PID2</code>, <code>PID3</code> for the child, <code>PID4</code>, <code>PID5</code> for the biological mother, and <code>PID23</code>, <code>PID24</code> for the biological father.</p>
-<p>The first step is to convert these identifier components into the same <code>person_id</code> format used in the longitudinal individual data. This makes it possible to connect the parent-identification records directly to the individual-level observations.</p>
-<p>The analysis constructs two income measures. The first uses family income observed in 2022. The second uses the average of family income observed in 2020 and 2022. In the final sample, both children and parents are restricted to ages 25–64 in 2022, and parent-child pairs are required to live in different families in the relevant year.</p>
+<p>It is important to distinguish <code>person_id</code> from <code>family_id</code>. A person keeps the same permanent <code>person_id</code> over time, but their <code>family_id</code> can change if their family living arrangement changes.</p>
+<p>The permanent person identifier is built from the PSID’s 1968 family interview number (<code>ER30001</code>) and person number (<code>ER30002</code>). The parent-identification file uses the same two-part structure for each relationship:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Person</th>
+<th>Identifier components</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Child</td>
+<td><code>PID2</code> and <code>PID3</code></td>
+</tr>
+<tr class="even">
+<td>Biological mother</td>
+<td><code>PID4</code> and <code>PID5</code></td>
+</tr>
+<tr class="odd">
+<td>Biological father</td>
+<td><code>PID23</code> and <code>PID24</code></td>
+</tr>
+</tbody>
+</table>
+<p>Combining each pair into the same format—for example, <code>4_3</code>—allows the child and parent identifiers to be matched to <code>person_id</code> in the longitudinal file. For an individual record, the same rule is applied to <code>ER30001</code> and <code>ER30002</code>; for a parent-identification record, it is applied to the relevant PID pair.</p>
+<p>The analysis creates two income measures. The first uses family income in 2022. The second averages family income in 2020 and 2022. For the final sample, the child’s age and the average age of the matched parent observations must both be between 25 and 64 in 2022. Parent observations are included only when the parent and child belong to different family units in the relevant year.</p>
 </section>
 <section id="loading-the-data-into-sqlite" class="level2">
 <h2 class="anchored" data-anchor-id="loading-the-data-into-sqlite">Loading the Data into SQLite</h2>
-<p>After the data-processing step, the two cleaned files are loaded into an SQLite database. The individual-level data are stored in an <code>individual</code> table, while the parent-identification data are stored in a separate <code>parent_identification</code> table.</p>
+<p>After the raw files have been cleaned, the two datasets are loaded into an SQLite database. The individual-level data are stored in an <code>individual</code> table. The parent-identification data are stored in a separate <code>parent_identification</code> table.</p>
+<p>The cleaned <code>individual_long.csv</code> file already contains <code>person_id</code>, constructed from <code>ER30001</code> and <code>ER30002</code>. The parent-identification file contains the original PID components, so I convert those components into the same ID format before loading the table.</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sqlite3</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>project_root <span class="op">=</span> Path(<span class="vs">r"ENTER YOUR PROJECT PATH"</span>)</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>cleaned_dir <span class="op">=</span> project_root <span class="op">/</span> <span class="st">"data"</span> <span class="op">/</span> <span class="st">"cleaned_data"</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>individual_data <span class="op">=</span> pd.read_csv(</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    cleaned_dir <span class="op">/</span> <span class="st">"individual_long.csv"</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>parent_identification <span class="op">=</span> pd.read_csv(</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    cleaned_dir <span class="op">/</span> <span class="st">"parent_identification.csv"</span></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>conn <span class="op">=</span> sqlite3.<span class="ex">connect</span>(</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    cleaned_dir <span class="op">/</span> <span class="st">"psid_matching.db"</span></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>individual_data[</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    [<span class="st">"person_id"</span>, <span class="st">"family_id"</span>, <span class="st">"family_income"</span>, <span class="st">"year"</span>, <span class="st">"age"</span>]</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>].to_sql(</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    <span class="st">"individual"</span>,</span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    conn,</span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>    if_exists<span class="op">=</span><span class="st">"replace"</span>,</span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    index<span class="op">=</span><span class="va">False</span></span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>parent_identification[</span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>    [<span class="st">"child_id"</span>, <span class="st">"mother_id"</span>, <span class="st">"father_id"</span>]</span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>].to_sql(</span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>    <span class="st">"parent_identification"</span>,</span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>    conn,</span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>    if_exists<span class="op">=</span><span class="st">"replace"</span>,</span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>    index<span class="op">=</span><span class="va">False</span></span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>The two tables play different roles. The <code>parent_identification</code> table describes the family relationship, while the <code>individual</code> table contains the longitudinal information needed to measure income, family membership, and age.</p>
-<p>Indexes are then created on the identifiers used repeatedly in the SQL joins.</p>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sqlite3</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> statsmodels.api <span class="im">as</span> sm</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>project_root <span class="op">=</span> Path(<span class="vs">r"ENTER YOUR PROJECT PATH"</span>)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>cleaned_dir <span class="op">=</span> project_root <span class="op">/</span> <span class="st">"data"</span> <span class="op">/</span> <span class="st">"cleaned_data"</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>individual_data <span class="op">=</span> pd.read_csv(</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    cleaned_dir <span class="op">/</span> <span class="st">"individual_long.csv"</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>parent_identification <span class="op">=</span> pd.read_csv(</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    cleaned_dir <span class="op">/</span> <span class="st">"parent_identification.csv"</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> make_person_id(family_id, person_number):</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> pd.isna(family_id) <span class="kw">or</span> pd.isna(person_number):</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">None</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    family_id <span class="op">=</span> <span class="bu">int</span>(family_id)</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    person_number <span class="op">=</span> <span class="bu">int</span>(person_number)</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> family_id <span class="op">&lt;=</span> <span class="dv">0</span> <span class="kw">or</span> person_number <span class="op">&lt;=</span> <span class="dv">0</span>:</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">None</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="ss">f"</span><span class="sc">{</span>family_id<span class="sc">}</span><span class="ss">_</span><span class="sc">{</span>person_number<span class="sc">}</span><span class="ss">"</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="co"># During individual-data cleaning, this same function is applied to:</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="co"># individual_data["person_id"] = individual_data.apply(</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="co">#     lambda row: make_person_id(row["ER30001"], row["ER30002"]),</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a><span class="co">#     axis=1</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a><span class="co"># )</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>parent_identification[<span class="st">"child_id"</span>] <span class="op">=</span> parent_identification.<span class="bu">apply</span>(</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>    <span class="kw">lambda</span> row: make_person_id(row[<span class="st">"PID2"</span>], row[<span class="st">"PID3"</span>]),</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>    axis<span class="op">=</span><span class="dv">1</span></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>parent_identification[<span class="st">"mother_id"</span>] <span class="op">=</span> parent_identification.<span class="bu">apply</span>(</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>    <span class="kw">lambda</span> row: make_person_id(row[<span class="st">"PID4"</span>], row[<span class="st">"PID5"</span>]),</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>    axis<span class="op">=</span><span class="dv">1</span></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>parent_identification[<span class="st">"father_id"</span>] <span class="op">=</span> parent_identification.<span class="bu">apply</span>(</span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>    <span class="kw">lambda</span> row: make_person_id(row[<span class="st">"PID23"</span>], row[<span class="st">"PID24"</span>]),</span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>    axis<span class="op">=</span><span class="dv">1</span></span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>conn <span class="op">=</span> sqlite3.<span class="ex">connect</span>(</span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>    cleaned_dir <span class="op">/</span> <span class="st">"psid_matching.db"</span></span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>individual_data[</span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>    [<span class="st">"person_id"</span>, <span class="st">"family_id"</span>, <span class="st">"family_income"</span>, <span class="st">"year"</span>, <span class="st">"age"</span>]</span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>].to_sql(</span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>    <span class="st">"individual"</span>,</span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>    conn,</span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>    if_exists<span class="op">=</span><span class="st">"replace"</span>,</span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>    index<span class="op">=</span><span class="va">False</span></span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a>parent_identification[</span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>    [<span class="st">"child_id"</span>, <span class="st">"mother_id"</span>, <span class="st">"father_id"</span>]</span>
+<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a>].to_sql(</span>
+<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>    <span class="st">"parent_identification"</span>,</span>
+<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a>    conn,</span>
+<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a>    if_exists<span class="op">=</span><span class="st">"replace"</span>,</span>
+<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a>    index<span class="op">=</span><span class="va">False</span></span>
+<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The two tables have different jobs. The <code>parent_identification</code> table tells us who is related to whom. The <code>individual</code> table tells us each person’s family income, family membership, and age in each survey year.</p>
+<p>Indexes are created on the identifiers used in the SQL joins. They help SQLite find matching records more efficiently.</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>cursor <span class="op">=</span> conn.cursor()</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>cursor.execute(<span class="st">"""</span></span>
@@ -295,35 +355,47 @@ window.Quarto = {
 </section>
 <section id="constructing-the-parent-child-relationship" class="level2">
 <h2 class="anchored" data-anchor-id="constructing-the-parent-child-relationship">Constructing the Parent-Child Relationship</h2>
-<p>The parent-identification file contains separate identifiers for the biological mother and father. To make the subsequent SQL operations more straightforward, these two relationships are converted into a single parent-child bridge table.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>cursor.execute(<span class="st">"""</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="st">CREATE TABLE parent_child AS</span></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="st">SELECT</span></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="st">    child_id,</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="st">    mother_id AS parent_id,</span></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="st">    'mother' AS parent_type</span></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="st">FROM parent_identification</span></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="st">WHERE mother_id IS NOT NULL</span></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="st">UNION ALL</span></span>
+<p>The parent-identification file stores the biological mother and father in separate columns. I turn these two relationships into one bridge table called <code>parent_child</code>. This makes the next step easier because each row represents one child-parent link.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>cursor.execute(<span class="st">"DROP TABLE IF EXISTS parent_child"</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>cursor.execute(<span class="st">"""</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="st">CREATE TABLE parent_child AS</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="st">SELECT</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="st">    child_id,</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="st">    mother_id AS parent_id,</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="st">    'mother' AS parent_type</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="st">FROM parent_identification</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="st">WHERE mother_id IS NOT NULL</span></span>
 <span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="st">SELECT</span></span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="st">    child_id,</span></span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="st">    father_id AS parent_id,</span></span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="st">    'father' AS parent_type</span></span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="st">FROM parent_identification</span></span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="st">WHERE father_id IS NOT NULL</span></span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="st">"""</span>)</span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>conn.commit()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>The resulting table contains one row for each child-parent relationship. A child with both a biological mother and father can therefore appear twice, once for each parent.</p>
-<p>This bridge table separates the relationship information from the longitudinal information. The <code>parent_child</code> table tells us <strong>who is connected to whom</strong>, while the <code>individual</code> table tells us <strong>what each person’s family income, family membership, and age were in a given year</strong>.</p>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="st">UNION ALL</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="st">SELECT</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="st">    child_id,</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="st">    father_id AS parent_id,</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="st">    'father' AS parent_type</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="st">FROM parent_identification</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a><span class="st">WHERE father_id IS NOT NULL</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a><span class="st">"""</span>)</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>conn.commit()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>UNION ALL</code> stacks the mother records and father records. A child with both biological parents identified therefore appears twice: once for the mother and once for the father.</p>
+<p>The bridge table tells us <strong>who is connected to whom</strong>. The <code>individual</code> table tells us <strong>what each person’s income, family membership, and age were in a given year</strong>. The SQL joins connect these two pieces of information.</p>
+<section id="a-quick-guide-to-the-sql-operations" class="level3">
+<h3 class="anchored" data-anchor-id="a-quick-guide-to-the-sql-operations">A quick guide to the SQL operations</h3>
+<ul>
+<li><strong><code>SELECT</code></strong> chooses which columns or calculated values should appear in the query result. Here, it selects the child ID, parent income, child income, and age.</li>
+<li><strong><code>JOIN</code></strong> connects records from different tables. I join the bridge table to <code>individual</code> to retrieve the parent’s and child’s observations.</li>
+<li><strong><code>GROUP BY</code></strong> puts rows with the same child ID into a group, so the query can produce one matched record for each child.</li>
+<li><strong>Aggregation</strong>, such as <code>AVG()</code>, calculates a summary for each group. Here, it averages the family income of the qualifying parent observations.</li>
+</ul>
+<p>These operations work together: <code>JOIN</code> finds the relevant records, <code>GROUP BY</code> organizes them by child, and <code>AVG()</code> summarizes the parent observations.</p>
+</section>
 </section>
 <section id="matching-parents-and-children-in-2022" class="level2">
 <h2 class="anchored" data-anchor-id="matching-parents-and-children-in-2022">Matching Parents and Children in 2022</h2>
-<p>We first construct the single-year income measure using observations from 2022.</p>
-<p>The SQL query joins the parent-child bridge table to the individual data twice: once to obtain the parent’s 2022 observation and once to obtain the child’s 2022 observation.</p>
+<p>I start with the single-year measure and use observations from 2022.</p>
+<p>The query joins the <code>parent_child</code> bridge table to the <code>individual</code> table twice. The first join retrieves the parent’s 2022 record. The second retrieves the child’s 2022 record.</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>single_year_query <span class="op">=</span> <span class="st">"""</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="st">SELECT</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="st">    pc.child_id,</span></span>
@@ -362,16 +434,15 @@ window.Quarto = {
 <span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>    single_year_query,</span>
 <span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>    conn</span>
 <span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>The first <code>JOIN</code> retrieves the parent’s 2022 observation, while the second retrieves the child’s observation from the same longitudinal table. The condition</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>WHERE parent.family_id <span class="op">!=</span> child.family_id</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>requires the parent and child to belong to different families in 2022.</p>
-<p>The query then uses <code>GROUP BY</code> to organize the matched observations by child. Since a child can be linked to both a biological mother and father, <code>AVG(parent.family_income)</code> combines the available parent income observations into a single parent-income measure. The same aggregation is used for parent age.</p>
-<p>The resulting variables are therefore <code>parent_income_2022</code>, <code>child_income_2022</code>, <code>child_age_2022</code>, and <code>parent_age_2022</code>.</p>
+<p>The <code>SELECT</code> statement lists the information I want in the result. The two <code>JOIN</code> operations attach the parent’s and child’s 2022 records to the same child ID. The condition</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">WHERE</span> <span class="kw">parent</span>.family_id <span class="op">!=</span> <span class="kw">child</span>.family_id</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>keeps parent observations only when the parent and child belong to different family units in 2022.</p>
+<p>The query then uses <code>GROUP BY</code> to organize the qualifying parent observations by child. <code>AVG(parent.family_income)</code> calculates the average family income across the matched biological-parent observations that meet the family-separation condition. If both parent observations qualify, their family incomes are averaged; if only one qualifies, that observation supplies the parent-income measure. This is an average of family-unit income, not the sum of the parents’ personal earnings.</p>
+<p>The child’s income is the family income of the family unit the child belongs to in 2022. The query also calculates the average age of the qualifying parent observations. These variables are returned as <code>parent_income_2022</code>, <code>child_income_2022</code>, <code>child_age_2022</code>, and <code>parent_age_2022</code>.</p>
 </section>
 <section id="constructing-the-20202022-income-measure" class="level2">
 <h2 class="anchored" data-anchor-id="constructing-the-20202022-income-measure">Constructing the 2020–2022 Income Measure</h2>
-<p>The second income measure uses information from both 2020 and 2022. Instead of relying on a single year’s income, we construct an average income measure across the two survey years.</p>
-<p>The SQL query retrieves observations for both generations in both years:</p>
+<p>The second measure uses both 2020 and 2022. Instead of relying on income from one survey year, I first retrieve the income observations for each generation in both years.</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>multi_year_query <span class="op">=</span> <span class="st">"""</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="st">SELECT</span></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="st">    pc.child_id,</span></span>
@@ -427,8 +498,9 @@ window.Quarto = {
 <span id="cb6-53"><a href="#cb6-53" aria-hidden="true" tabindex="-1"></a>    multi_year_query,</span>
 <span id="cb6-54"><a href="#cb6-54" aria-hidden="true" tabindex="-1"></a>    conn</span>
 <span id="cb6-55"><a href="#cb6-55" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Here, the parent and child observations are matched across both years. The family-separation condition is also imposed separately in 2020 and 2022, so the parent and child must belong to different families in both years.</p>
-<p>After the SQL query returns the four income variables, Python constructs the two-year averages:</p>
+<p>This query uses four joins because it needs a record for the parent and the child in each of the two years. Since these are inner joins, a matched child-parent relationship must have observations in both 2020 and 2022.</p>
+<p>The <code>WHERE</code> conditions apply the family-separation rule in each year. The parent observations used in the calculation must belong to a different family from the child in both 2020 and 2022.</p>
+<p>The query returns parent and child income separately for each year. Python then calculates the simple two-year average:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>multi_year[<span class="st">"parent_income_avg"</span>] <span class="op">=</span> (</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    multi_year[<span class="st">"parent_income_2020"</span>]</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">+</span> multi_year[<span class="st">"parent_income_2022"</span>]</span>
@@ -438,34 +510,50 @@ window.Quarto = {
 <span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    multi_year[<span class="st">"child_income_2020"</span>]</span>
 <span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">+</span> multi_year[<span class="st">"child_income_2022"</span>]</span>
 <span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>) <span class="op">/</span> <span class="dv">2</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>The single-year and multi-year results are then merged using the child identifier:</p>
+<p>Finally, I merge the single-year and multi-year results using <code>child_id</code>:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>matched_data <span class="op">=</span> single_year.merge(</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    multi_year,</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    on<span class="op">=</span><span class="st">"child_id"</span>,</span>
 <span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    how<span class="op">=</span><span class="st">"inner"</span></span>
 <span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>This produces a dataset in which the same matched children have both the 2022 income measures and the 2020–2022 average income measures.</p>
+<p>The inner merge keeps children who have both measures. This gives us a common starting sample for comparing the 2022 income measure with the 2020–2022 average.</p>
 </section>
 <section id="applying-the-sample-restrictions" class="level2">
 <h2 class="anchored" data-anchor-id="applying-the-sample-restrictions">Applying the Sample Restrictions</h2>
-<p>Before estimating the regressions, the analysis removes observations with non-positive income. This is necessary because the regression uses logarithmic income.</p>
+<p>Before running the regressions, I keep observations with positive income. This is necessary because the models use the natural logarithm of income, which is not defined for zero or negative values.</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>matched_data <span class="op">=</span> matched_data[</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    (matched_data[<span class="st">"parent_income_2022"</span>] <span class="op">&gt;</span> <span class="dv">0</span>) <span class="op">&amp;</span></span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    (matched_data[<span class="st">"child_income_2022"</span>] <span class="op">&gt;</span> <span class="dv">0</span>) <span class="op">&amp;</span></span>
 <span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    (matched_data[<span class="st">"parent_income_avg"</span>] <span class="op">&gt;</span> <span class="dv">0</span>) <span class="op">&amp;</span></span>
 <span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    (matched_data[<span class="st">"child_income_avg"</span>] <span class="op">&gt;</span> <span class="dv">0</span>)</span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>The working-age restriction is then applied using age in 2022:</p>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>].copy()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>I then apply the working-age restriction using 2022 age:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>matched_data <span class="op">=</span> matched_data[</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    matched_data[<span class="st">"child_age_2022"</span>].between(<span class="dv">25</span>, <span class="dv">64</span>) <span class="op">&amp;</span></span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    matched_data[<span class="st">"parent_age_2022"</span>].between(<span class="dv">25</span>, <span class="dv">64</span>)</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Thus, the final estimation sample contains parent-child pairs for which both generations are between 25 and 64 in 2022 and all income measures used in the regressions are positive.</p>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>].copy()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Here, <code>child_age_2022</code> is the child’s age, while <code>parent_age_2022</code> is the average age of the qualifying parent observations. Both measures must fall between 25 and 64.</p>
+<p>One important step is to build both regression samples from this <strong>same filtered matched dataset</strong>. This keeps the single-year and multi-year estimates comparable.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>single_year <span class="op">=</span> matched_data[</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    [</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>        <span class="st">"child_id"</span>,</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>        <span class="st">"parent_income_2022"</span>,</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>        <span class="st">"child_income_2022"</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    ]</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>].copy()</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>multi_year <span class="op">=</span> matched_data[</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    [</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>        <span class="st">"child_id"</span>,</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>        <span class="st">"parent_income_avg"</span>,</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>        <span class="st">"child_income_avg"</span></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>    ]</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>].copy()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="estimating-intergenerational-income-elasticity" class="level2">
 <h2 class="anchored" data-anchor-id="estimating-intergenerational-income-elasticity">Estimating Intergenerational Income Elasticity</h2>
-<p>The final step is to estimate the relationship between parent and child family income.</p>
-<p>The analysis uses a log-log specification:</p>
+<p>Now that the parent-child match and income measures are ready, I estimate how strongly parents’ income is associated with their children’s income.</p>
+<p>I use a log-log regression:</p>
 <p><span class="math display">\[
 \log(Y_i^{child})
 =
@@ -475,46 +563,46 @@ window.Quarto = {
 +
 \varepsilon_i.
 \]</span></p>
-<p>The coefficient <span class="math display">\[\beta\]</span> is the intergenerational income elasticity (IGE). It measures how strongly differences in parent income are associated with differences in child income.</p>
-<p>For the 2022 single-year measure, the analysis takes the natural logarithm of parent and child income and estimates the relationship using OLS:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>single_year[<span class="st">"log_parent_income"</span>] <span class="op">=</span> np.log(</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    single_year[<span class="st">"parent_income_2022"</span>]</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>single_year[<span class="st">"log_child_income"</span>] <span class="op">=</span> np.log(</span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    single_year[<span class="st">"child_income_2022"</span>]</span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> sm.add_constant(</span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    single_year[<span class="st">"log_parent_income"</span>]</span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>model_single <span class="op">=</span> sm.OLS(</span>
-<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>    single_year[<span class="st">"log_child_income"</span>],</span>
-<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>    X</span>
-<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>).fit()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>The same procedure is applied to the 2020–2022 average income:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>multi_year[<span class="st">"log_parent_income"</span>] <span class="op">=</span> np.log(</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    multi_year[<span class="st">"parent_income_avg"</span>]</span>
+<p>The coefficient () is the <strong>intergenerational income elasticity (IGE)</strong>. For example, an IGE of 0.25 means that a 1% difference in parental income is associated with about a 0.25% difference in child income, on average.</p>
+<p>For the 2022 single-year measure, I take the natural log of parent and child income and estimate the model using OLS:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>single_year[<span class="st">"log_parent_income"</span>] <span class="op">=</span> np.log(</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    single_year[<span class="st">"parent_income_2022"</span>]</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>multi_year[<span class="st">"log_child_income"</span>] <span class="op">=</span> np.log(</span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    multi_year[<span class="st">"child_income_avg"</span>]</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>single_year[<span class="st">"log_child_income"</span>] <span class="op">=</span> np.log(</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    single_year[<span class="st">"child_income_2022"</span>]</span>
 <span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> sm.add_constant(</span>
-<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>    multi_year[<span class="st">"log_parent_income"</span>]</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>X_single <span class="op">=</span> sm.add_constant(</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>    single_year[<span class="st">"log_parent_income"</span>]</span>
 <span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>model_multi <span class="op">=</span> sm.OLS(</span>
-<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>    multi_year[<span class="st">"log_child_income"</span>],</span>
-<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>    X</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>model_single <span class="op">=</span> sm.OLS(</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>    single_year[<span class="st">"log_child_income"</span>],</span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>    X_single</span>
 <span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>).fit()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>The analysis extracts the estimated IGE coefficient, standard error, p-value, sample size, and R-squared from each model and saves them to the regression results file.</p>
+<p>I repeat the same steps using the 2020–2022 average:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>multi_year[<span class="st">"log_parent_income"</span>] <span class="op">=</span> np.log(</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    multi_year[<span class="st">"parent_income_avg"</span>]</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>multi_year[<span class="st">"log_child_income"</span>] <span class="op">=</span> np.log(</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    multi_year[<span class="st">"child_income_avg"</span>]</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>X_multi <span class="op">=</span> sm.add_constant(</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    multi_year[<span class="st">"log_parent_income"</span>]</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>model_multi <span class="op">=</span> sm.OLS(</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>    multi_year[<span class="st">"log_child_income"</span>],</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>    X_multi</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>).fit()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>For each model, I record the IGE estimate, standard error, p-value, number of observations, and R-squared. The two models use the same filtered matched sample, so the comparison focuses on the income measure rather than a change in the sample.</p>
 </section>
 <section id="results" class="level2">
 <h2 class="anchored" data-anchor-id="results">Results</h2>
-<p>The two specifications produce the following results:</p>
+<p>The two models produce the following estimates:</p>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -542,53 +630,29 @@ window.Quarto = {
 </tr>
 </tbody>
 </table>
-<p>For the 2022 single-year measure, the estimated IGE is <strong>0.245</strong> with a standard error of <strong>0.023</strong>. For the 2020–2022 average measure, the estimated IGE increases to <strong>0.280</strong>, with a standard error of <strong>0.022</strong>.</p>
-<p>The results indicate a positive relationship between parent and child family income in both specifications. The higher IGE obtained using the two-year average also suggests that the estimated intergenerational income relationship is sensitive to how income is measured over time.</p>
+<p>With 2022 income alone, the estimated IGE is <strong>0.245</strong>. This means that a 1% difference in parental family income is associated with about a 0.245% difference in child family income.</p>
+<p>When income is averaged across 2020 and 2022, the estimated IGE rises to <strong>0.280</strong>. In this specification, a 1% difference in parental family income is associated with about a 0.280% difference in child family income.</p>
+<p>The R-squared also rises from <strong>0.065</strong> to <strong>0.092</strong>. In this sample, the model using the two-year average accounts for more of the variation in child income. Overall, the estimates show that the measured intergenerational relationship depends partly on how income is measured.</p>
 </section>
 <section id="life-cycle-bias" class="level2">
 <h2 class="anchored" data-anchor-id="life-cycle-bias">Life-Cycle Bias</h2>
-<p>Income is not necessarily a stable measure of an individual’s long-run economic position. A person’s income in any particular year can contain temporary fluctuations. Using only one year’s income may therefore introduce measurement noise into the intergenerational income relationship.</p>
-<p>The single-year specification uses family income observed in 2022:</p>
-<p><span class="math display">\[
-\log(Y_i^{child,2022})
-=
-\alpha
-+
-\beta\log(Y_i^{parent,2022})
-+
-\varepsilon_i.
-\]</span></p>
-<p>The alternative specification uses average family income over 2020 and 2022:</p>
-<p><span class="math display">\[
-\log\left(
-\frac{Y_i^{child,2020}+Y_i^{child,2022}}{2}
-\right)
-=
-\alpha
-+
-\beta
-\log\left(
-\frac{Y_i^{parent,2020}+Y_i^{parent,2022}}{2}
-\right)
-+
-\varepsilon_i.
-\]</span></p>
-<p>Averaging income across multiple years can reduce the influence of temporary income fluctuations and provide a measure that is closer to an individual’s longer-run economic position.</p>
-<p>In our results, the estimated IGE increases from <strong>0.245</strong> using 2022 income to <strong>0.280</strong> using the 2020–2022 average. The R-squared also increases from <strong>0.065</strong> to <strong>0.092</strong>. This comparison illustrates how the estimated degree of intergenerational persistence can change when income is measured over a longer period.</p>
+<p>Income changes over a person’s working life. Someone who is just starting a career may earn much less than they will later on. Someone further along in their career may be closer to their peak earnings. A single year’s income can therefore reflect <strong>when</strong> we observe a person, not just their longer-run economic position.</p>
+<p>This creates a problem for intergenerational income estimates. If we measure parents’ and children’s income at only one point in time, the estimate may be influenced by the life-cycle stages they happen to be in. A one-year snapshot can make long-run income differences look larger or smaller than they really are.</p>
+<p>Averaging income across years can help. It reduces the influence of an unusual year and makes the measure less dependent on one particular observation. In this project, the two-year average gives an IGE of <strong>0.280</strong>, compared with <strong>0.245</strong> using 2022 income alone. The higher estimate is consistent with the idea that a single-year measure may understate the persistence of income across generations in this sample.</p>
+<p>This comparison illustrates why life-cycle timing and short-term income variation matter when measuring IGE. It does not show that averaging two years removes every source of life-cycle bias, but it does show that the estimated relationship changes when we use a measure that is less dependent on a single year’s income.</p>
 </section>
 <section id="takeaways" class="level2">
 <h2 class="anchored" data-anchor-id="takeaways">Takeaways</h2>
-<p>This project demonstrates how SQL can be used to solve a longitudinal parent-child matching problem using PSID data.</p>
-<p>The main steps are:</p>
+<p>This project shows how SQL in Python can turn separate PSID relationship and income files into a matched parent-child dataset.</p>
+<p>The process is straightforward:</p>
 <ol type="1">
-<li><strong>Reshape the PSID data into a person-year structure</strong> so individuals can be tracked across 2020 and 2022.</li>
-<li><strong>Construct a parent-child bridge table</strong> from the biological parent identifiers.</li>
-<li><strong>Use SQL <code>JOIN</code> operations</strong> to connect parents and children to their individual-level observations.</li>
-<li><strong>Use <code>GROUP BY</code> and aggregation</strong> to construct parent-level income and age measures.</li>
-<li><strong>Construct both single-year and multi-year income measures</strong> to examine the sensitivity of IGE to income measurement.</li>
-<li><strong>Estimate log-log OLS regressions</strong> to obtain the intergenerational income elasticity.</li>
+<li>Create a permanent <code>person_id</code> so the same individual can be followed across survey years.</li>
+<li>Use the parent-identification file to build a bridge table linking each child to their biological mother and father.</li>
+<li>Use SQL <code>SELECT</code> and <code>JOIN</code> to retrieve the parent and child records.</li>
+<li>Use <code>GROUP BY</code> and <code>AVG()</code> to summarize the qualifying parent observations and construct the parental income measure.</li>
+<li>Compare IGE estimates using 2022 income alone and the average of 2020 and 2022 income.</li>
 </ol>
-<p>The main lesson is that SQL provides a clear way to organize relationship matching, longitudinal joins, and aggregation when working with complex panel data. In this project, the parent-child bridge table connects the family relationship information to the longitudinal PSID records, while the SQL joins and aggregation operations transform those matched records into the income measures required for the final IGE analysis.</p>
+<p>The main takeaway is that <strong>the way we measure income matters</strong>. In this sample, the IGE is higher when income is averaged across two years rather than measured in 2022 alone. A multi-year average can give a more stable picture of long-run economic status because it relies less on one year’s income. SQL makes the matching process organized and transparent, while the final regression connects the matched data to the economic question.</p>
 
 
 </section>
