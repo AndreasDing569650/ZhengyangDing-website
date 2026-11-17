@@ -1,89 +1,90 @@
 ---
-title: "Can Better Stock Predictions Make Better Investments?"
-date: 2026-11-15
+title: "Improving Stock Investment Strategies with Gradient Boosting"
+date: 2026-11-16
 categories:
-  - computational economics
   - machine learning
-  - stock returns
+  - investment returns
 ---
 
-An improved stock-selection model earned a 23.04% annualized return in my backtest, after estimated trading costs. Buying and holding SPY earned 14.81%. That looks encouraging. Yet the model could not forecast individual stock returns more accurately than a simple historical average.
+## Introduction
 
-How can both results be true? Revisiting our classroom experiment and testing two gradient boosting models helps separate three questions: whether analysis helps, whether predictions improve, and whether those predictions support a useful investment strategy.
+In our class, we explored whether financial analysis could help investors select stocks more effectively than intuition alone. Each team created two portfolios: one based on subjective choices and another informed by financial analysis. We also examined an XGBoost model that used historical market data to predict future stock returns.
 
-## 1. Did analysis help in class?
+This post evaluates whether improving gradient boosting models may help with investment strategies. I revisit the classroom experiment and test a modified version of that model. I compare the original and revised models on the same test observations, then examine whether changes in prediction accuracy translate into better investment performance.
 
-Each team began with two $100,000 portfolios: one selected subjectively without analysis, and another selected after analysis. The specific analytical methods were not documented.
+## 1. What can we learn from the class experiment?
 
-Across 45 teams, the first portfolio earned an average return of 1.18%, compared with 3.09% for the second. The analyzed portfolio finished ahead in 30 teams.
+Each portfolio started with $100,000. Portfolio 1 used subjective selection, while Portfolio 2 drew on analytical tools introduced in class, including correlations, Sharpe ratios, Jensen’s alpha, portfolio optimization, and return prediction.
 
-![Teams above the dashed line earned more with their analyzed portfolio. Each point represents the same team's two portfolios.](figure/01_class_paired_returns.png){#fig-class fig-alt="Scatterplot comparing subjective and analyzed portfolio returns across 45 teams, with a diagonal equality line."}
+Across 45 teams, Portfolio 1 earned an average return of 1.18%, compared with 3.09% for Portfolio 2. The analyzed portfolio finished ahead in 30 teams.
 
-The average advantage was 1.91 percentage points, or about $1,909. However, its paired-test 95% confidence interval ranged from −0.38 to 4.20 percentage points, with a two-sided p-value of 0.100. A paired bootstrap interval also included zero.
+![Each point represents one team's two portfolios. Points above the dashed line indicate a higher return for the analyzed portfolio.](figure/01_class_paired_returns.png){#fig-class fig-alt="Scatterplot comparing subjective and analysis-based portfolio returns for 45 teams."}
 
-The results suggest a possible benefit, but leave substantial uncertainty. They also cannot establish causality: teams chose different stocks and used unspecified analytical methods.
+The average paired advantage was 1.91 percentage points, or approximately $1,909. However, the 95% confidence interval ranged from −0.38 to 4.20 percentage points, with a two-sided p-value of 0.100. The results suggest a possible benefit from analysis, but leave considerable uncertainty.
 
-Stock prediction faces deeper obstacles. Prices respond rapidly to information, future news is unknown, and historical relationships can change. A flexible model can also mistake random fluctuations for repeatable patterns.
+My own subjective portfolio experiment, designed intuitively with a classmate, held Apple, Eli Lilly, Moderna, NVIDIA, and Novo Nordisk. The screenshot records a total value of $118,390.30 and a net gain on the holdings of $19,016.75.
 
-## 2. Building a more cautious model
+![Our subjective stock selections produced a positive overall result, with most of the net gain coming from Moderna.](figure/01_subjective_portfolio.png){#fig-own fig-alt="Portfolio screenshot listing Apple, Eli Lilly, Moderna, NVIDIA, and Novo Nordisk, with Moderna contributing the largest gain."}
 
-I downloaded daily prices and volume for 50 established U.S. stocks across several industries, plus SPY, from [Yahoo Finance](https://finance.yahoo.com/) using R's [quantmod](https://www.quantmod.com/) interface. Data cover 2010–2025, with adjusted prices used to calculate returns.
+Moderna contributed $15,046.65—about 79% of the holdings’ net gain—while NVIDIA and Novo Nordisk lost value. A strong result can therefore depend heavily on one successful stock.
 
-The baseline reconstructs the classroom-reference XGBoost model on this common sample. XGBoost builds successive decision trees that correct earlier prediction errors. The baseline uses 300 trees, depth five, and a learning rate of 0.05, with price, volume, momentum, volatility, and market-return predictors.
+This helps explain why returns are difficult to predict. Future news is unknown, market conditions change, and patterns that appear useful in one sample may disappear in another.
 
-My improved version removes raw price levels, redefines momentum, and adds scale-free measures: market-relative momentum, volume ratios, and distance below the past year's high. Shallower trees, stronger regularization, and row and column subsampling limit complexity.
+## 2. How did I modify the original model?
 
-I selected settings using 2018–2019 validation data. The winning model used 200 trees of depth two and an expanding training window. It was retrained annually; the baseline remained fixed at the start of testing.
+I obtained daily prices and trading volume for the classroom’s 95 stocks and SPY from [Yahoo Finance](https://finance.yahoo.com/) through R’s `tidyquant` package.
 
-Final evaluation uses 2020–2025 data: 74 prediction dates and 3,700 stock-level forecasts. At every training cutoff, only already-realized return labels were available. Signals occur every 20 trading days, with entry at the following close and exit 20 trading days later.
+After constructing the predictors, the training sample contains 35,625 observations dated before 2024. The test sample contains 66,595 observations dated from January 2024 through October 2026.
 
-## 3. Better forecasts, but a simple average still wins
+The prediction target follows the classroom definition: the adjusted-price return between the next trading day’s close and the twentieth future trading day’s close.
 
-The prediction benchmark assigns every stock the average return observed in the pre-test training sample.
+The original model uses XGBoost, which builds decision trees sequentially to address earlier prediction errors. Its settings include 300 trees, depth five, and a learning rate of 0.05. Predictors include prices, volume, momentum, volatility, and market-adjusted returns.
 
-| Model | RMSE | Out-of-sample R² | Mean rank correlation |
-|:--|--:|--:|--:|
-| Historical mean | **0.08433** | 0.0000 | — |
-| Original XGBoost | 0.08951 | −0.1266 | 0.0130 |
-| Improved XGBoost | 0.08486 | −0.0125 | 0.0288 |
+For the revised model, I replaced raw price levels with proportional indicators, including momentum, market-relative momentum, volume ratios, and distance below the trailing high. These measures describe recent performance without depending directly on a stock’s price level.
 
-: Prediction results on the same out-of-sample observations. Lower RMSE is better; positive R² indicates improvement over the historical-mean benchmark. Rank correlation measures stock-ordering accuracy within each prediction date. {#tbl-predictions}
+I also used 500 shallower trees, depth three, a learning rate of 0.03, and stronger regularization. Row and column sampling further reduce reliance on particular observations or predictors. These settings were fixed before evaluating the results.
 
-The improved model reduced RMSE by 5.20% relative to the original. A time-block bootstrap supported this reduction. Nevertheless, its negative R² shows that the historical mean remained more accurate.
+Both models use identical training and test observations, return targets, and portfolio calculations.
 
-Ranking improved too, but the average correlation of 0.0288 indicates a weak signal.
+## 3. Did prediction accuracy improve?
 
-## 4. What would an investor have earned?
+The simple benchmark assigns every stock the historical average return calculated from the training sample.
 
-Both model portfolios held the ten highest-ranked stocks at equal weights. Comparisons use identical holding intervals, an equal-weight portfolio of all 50 stocks, and buy-and-hold SPY.
-
-Trading costs depend on actual buys and sells after allowing holdings to drift with prices. The main scenario charges 10 basis points, or 0.10%, per dollar bought or sold.
-
-![The improved strategy finishes with the highest wealth, but all four strategies experience substantial losses along the way.](figure/04_net_wealth.png){#fig-wealth fig-alt="Daily portfolio values showing improved XGBoost ending near 339,000 dollars, original XGBoost near 284,000, and both benchmarks near 225,000."}
-
-| Strategy | Annualized return | Annualized volatility | Sharpe ratio | Maximum drawdown |
+| Model | RMSE | Out-of-sample R² | Direction accuracy | Mean daily rank correlation |
 |:--|--:|--:|--:|--:|
-| Original XGBoost | 19.40% | 24.93% | 0.84 | −41.31% |
-| Improved XGBoost | **23.04%** | 28.80% | **0.87** | −35.98% |
-| Equal-weight universe | 14.77% | 20.22% | 0.78 | −33.43% |
-| SPY | 14.81% | 20.88% | 0.77 | −33.72% |
+| Historical mean | **0.08887** | 0.0000 | **56.06%** | — |
+| Original XGBoost | 0.09354 | −0.1079 | 52.46% | **0.0405** |
+| Improved XGBoost | 0.09184 | −0.0679 | 51.00% | 0.0212 |
 
-: Net investment performance at 10 bps per dollar traded. Sharpe ratios assume a zero risk-free rate. Drawdowns use daily wealth. {#tbl-investment}
+: Lower RMSE indicates smaller prediction errors. Daily rank correlation measures whether predicted stock rankings match subsequent return rankings. {#tbl-predictions}
 
-Selecting only the highest-ranked stocks can produce gains even when forecasts across the full sample remain inaccurate. Here, however, higher returns came with greater volatility, and the Sharpe improvement over the original model was modest.
+The revised model reduced RMSE by approximately 1.82% relative to the original. MAE also decreased, from 0.06830 to 0.06683.
 
-![Performance varies across years. In 2022 the improved model lost 9.21% while the original gained 1.21%; in 2024 it also trailed SPY. First and last years cover partial calendar years.](figure/04_annual_returns.png){#fig-annual fig-alt="Grouped annual-return bars showing that improved XGBoost does not outperform every year."}
+![The revised model reduces prediction error, but the historical-mean benchmark remains more accurate.](figure/05_prediction_rmse.png){#fig-rmse fig-alt="RMSE comparison showing the historical mean performing best, followed by improved and original XGBoost."}
 
-Time-block bootstrap intervals for the improved strategy's average holding-period return advantage over each comparator all included zero. The observed gains therefore remain uncertain.
+However, direction accuracy and ranking performance declined. Both models also had negative out-of-sample R², meaning that neither beat the historical mean on squared prediction error. The changes improved return-magnitude estimates only modestly.
 
-![Higher trading costs reduce model returns. At 25 bps, the improved model's annualized return falls to 20.64%, with a Sharpe ratio of approximately 0.80.](figure/04_cost_sensitivity.png){#fig-cost fig-alt="Transaction-cost sensitivity showing model annualized returns declining more sharply than benchmark returns."}
+## 4. Did the changes produce better investment performance?
+
+Each month, both models select the ten highest-predicted stocks and apply the classroom portfolio procedure. The comparison includes 34 monthly portfolios, from January 2024 through October 2026.
+
+![The revised model experiences larger swings and finishes slightly below the original model.](figure/05_model_performance_comparison.png){#fig-investment fig-alt="Compounded monthly return indices showing similar final model values but larger fluctuations for improved XGBoost."}
+
+| Strategy | Cumulative return | Monthly return standard deviation | Monthly-endpoint maximum drawdown |
+|:--|--:|--:|--:|
+| Original XGBoost | **437.39%** | 8.66% | −11.80% |
+| Improved XGBoost | 432.37% | 16.35% | −28.06% |
+| Equal-weight universe | 61.93% | 2.97% | −7.29% |
+| SPY | 69.26% | 3.18% | −6.28% |
+
+: Hypothetical results calculated using the classroom backtest procedure. Cumulative values compound monthly returns; risk measures use monthly observations. {#tbl-investment}
+
+The model indices exceeded both simple benchmarks, but the revised model offered no improvement over the original’s final return. Its monthly volatility was approximately 1.89 times as large, and its drawdown was deeper.
+
+Interestingly, its average monthly return was higher: 6.15%, versus 5.41%. Compounding explains the difference. Larger fluctuations can reduce long-run growth, so a higher arithmetic average does not guarantee a higher final value.
 
 ## Takeaway
 
-The changes improved forecasts relative to the original model and produced higher returns in this backtest. They did not establish dependable market-predicting ability. The historical mean remained the better point forecast, investment advantages were imprecisely estimated, and the fixed stock sample introduces survivorship and selection bias.
+The revised XGBoost model slightly reduced prediction errors, but weakened direction and stock-ranking accuracy. Its investment result was close to the original’s, with substantially greater variation.
 
-A useful evaluation must examine prediction errors, investment risk, costs, and uncertainty together. An impressive final portfolio value answers only part of the question.
-
----
-
-**Sources and reproducibility.** Classroom results: course-provided `Full_Result.xlsx`. Market data: Yahoo Finance, accessed through `quantmod`, with cached daily observations for 2010–2025. The classroom-reference XGBoost script is archived in [this repository](https://github.com/Changlin-DU/Stock_Returns/blob/main/code/original/original_xgboost.R). My analysis changes the sample, training periods, and evaluation rules; it is a reconstruction rather than an exact replication. All reported results come from the accompanying R analysis.
+My main takeaway is that improving a forecasting score is only one part of evaluating a stock-selection model. The predictions must also lead to useful rankings and an investment outcome whose returns justify the fluctuations experienced along the way.
